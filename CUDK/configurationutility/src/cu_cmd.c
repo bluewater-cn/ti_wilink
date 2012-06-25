@@ -590,8 +590,6 @@ char* PrintSSID(OS_802_11_SSID* ssid)
         
         os_error_printf(CU_MSG_ERROR, (PS8)"PrintSSID. ssid->SsidLength=%d exceeds the limit %d\n",
                          ssid->SsidLength, MAX_SSID_LEN);
-        /*WLAN_OS_REPORT(("PrintSSID. ssid->SsidLength=%d exceeds the limit %d\n",
-                   ssid->SsidLength, MAX_SSID_LEN));*/
         ssid->SsidLength = MAX_SSID_LEN;
     }
 	os_memcpy((PVOID)ssidBuf, (PVOID) ssid->Ssid, ssid->SsidLength); 

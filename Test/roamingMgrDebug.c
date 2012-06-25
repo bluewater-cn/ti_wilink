@@ -175,7 +175,6 @@ void roamingMgrDebugFunction(TI_HANDLE hRoamingMngr,
 
             bssList = scanMngr_getBSSList(((roamingMngr_t*)hRoamingMngr)->hScanMngr); 
 
-            WLAN_OS_REPORT(("Roaming connect: BSS LIST num of entries=%d \n", bssList->numOfEntries));
             PrintBssListGotAfterImemediateScan(((roamingMngr_t*)hRoamingMngr)->hScanMngr);
 
             /* The values below must be configured in manual mode */
@@ -294,11 +293,9 @@ void roamingMgrDebugFunction(TI_HANDLE hRoamingMngr,
         break;
 
     case ROAMING_PRINT_MANUAL_MODE: /* 1617 */
-        WLAN_OS_REPORT(("\n ROAMING MANUAL MODE IS: %d \n",((roamingMngr_t*)hRoamingMngr)->RoamingOperationalMode));
         break;
         
 	default:
-		WLAN_OS_REPORT(("Invalid function type in Debug  Function Command, funcType= %d\n\n", funcType));
 		break;
 	}
 } 
@@ -306,31 +303,6 @@ void roamingMgrDebugFunction(TI_HANDLE hRoamingMngr,
 
 void printRoamingMgrHelpMenu(void)
 {
-	WLAN_OS_REPORT(("\n\n   Roaming Manager Debug Menu   \n"));
-	WLAN_OS_REPORT(("------------------------\n"));
-
-
-	WLAN_OS_REPORT(("        %02d - ROAMING_MGR_DEBUG_HELP_MENU \n", ROAMING_MGR_DEBUG_HELP_MENU));
-
-	WLAN_OS_REPORT(("        %02d - PRINT_ROAMING_STATISTICS \n", PRINT_ROAMING_STATISTICS));
-	WLAN_OS_REPORT(("        %02d - RESET_ROAMING_STATISTICS \n", RESET_ROAMING_STATISTICS));
-
-	WLAN_OS_REPORT(("        %02d - PRINT_ROAMING_CURRENT_STATUS \n", PRINT_ROAMING_CURRENT_STATUS));
-	WLAN_OS_REPORT(("        %02d - PRINT_ROAMING_CANDIDATE_TABLE \n", PRINT_ROAMING_CANDIDATE_TABLE));
-
-	WLAN_OS_REPORT(("        %02d - TRIGGER_ROAMING_LOW_QUALITY_EVENT \n", TRIGGER_ROAMING_LOW_QUALITY_EVENT));
-	WLAN_OS_REPORT(("        %02d - TRIGGER_ROAMING_BSS_LOSS_EVENT \n", TRIGGER_ROAMING_BSS_LOSS_EVENT));
-	WLAN_OS_REPORT(("        %02d - TRIGGER_ROAMING_SWITCH_CHANNEL_EVENT \n", TRIGGER_ROAMING_SWITCH_CHANNEL_EVENT));
-	WLAN_OS_REPORT(("        %02d - TRIGGER_ROAMING_AP_DISCONNECT_EVENT \n", TRIGGER_ROAMING_AP_DISCONNECT_EVENT));
-
-	WLAN_OS_REPORT(("        %02d - TRIGGER_ROAMING_CONNECT_EVENT \n", TRIGGER_ROAMING_CONNECT_EVENT));
-	WLAN_OS_REPORT(("        %02d - TRIGGER_ROAMING_NOT_CONNECTED_EVENT \n", TRIGGER_ROAMING_NOT_CONNECTED_EVENT));
-
-	WLAN_OS_REPORT(("        %02d - TRIGGER_ROAMING_HANDOVER_SUCCESS_EVENT \n", TRIGGER_ROAMING_HANDOVER_SUCCESS_EVENT));
-	WLAN_OS_REPORT(("        %02d - TRIGGER_ROAMING_HANDOVER_FAILURE_EVENT \n", TRIGGER_ROAMING_HANDOVER_FAILURE_EVENT));
-	
-
-	WLAN_OS_REPORT(("\n------------------------\n"));
 }
 
 void PrintBssListGotAfterImemediateScan(TI_HANDLE hScanMgr)
@@ -339,23 +311,11 @@ void PrintBssListGotAfterImemediateScan(TI_HANDLE hScanMgr)
     bssEntry_t* pBssEntry;
     int i=0;
 
-    WLAN_OS_REPORT(("------ PRINTING BSS FOUND AFTER IMMEDIATE SCAN - MANUAL MODE----------\n"));
-
     bssList = scanMngr_getBSSList(hScanMgr); 
 
     for (i=0 ; i< bssList->numOfEntries ; i++) 
     {
         pBssEntry = &(bssList->BSSList[i]);
-            
-        WLAN_OS_REPORT( ("BSSID: %02x:%02x:%02x:%02x:%02x:%02x, band: %d\n", pBssEntry->BSSID[ 0 ],
-                         pBssEntry->BSSID[ 1 ], pBssEntry->BSSID[ 2 ],
-                         pBssEntry->BSSID[ 3 ], pBssEntry->BSSID[ 4 ],
-                         pBssEntry->BSSID[ 5 ], pBssEntry->band));
-       WLAN_OS_REPORT( ("channel: %d, beacon interval: %d, average RSSI: %d dBm\n", 
-                                      pBssEntry->channel, pBssEntry->beaconInterval, pBssEntry->RSSI));
-
     }
-
-    WLAN_OS_REPORT(("-----------------------------------------------------------------------\n"));
 
 }

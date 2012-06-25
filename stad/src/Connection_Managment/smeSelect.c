@@ -77,14 +77,10 @@ TSiteEntry *sme_Select (TI_HANDLE hSme)
     TI_BOOL         bWscPbAbort, pWscPbApFound = TI_FALSE;
     int             apFoundCtr =0;
 
-    TRACE0(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select called\n");
-
     /* on SG avalanche, select is not needed, send connect event automatically */
     if (TI_TRUE == pSme->bReselect)
     {        
         paramInfo_t *pParam;
-
-        TRACE0(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: reselect flag is on, reselecting the current site\n");
 
         pParam = (paramInfo_t *)os_memoryAlloc(pSme->hOS, sizeof(paramInfo_t));
         if (!pParam)
@@ -109,12 +105,9 @@ TSiteEntry *sme_Select (TI_HANDLE hSme)
     /* check all sites */
     while (NULL != pCurrentSite)
     {
-        TRACE6(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: considering BSSID: %02x:%02x:%02x:%02x:%02x:%02x for selection\n", pCurrentSite->bssid[ 0 ], pCurrentSite->bssid[ 1 ], pCurrentSite->bssid[ 2 ], pCurrentSite->bssid[ 3 ], pCurrentSite->bssid[ 4 ], pCurrentSite->bssid[ 5 ]);
-
         /* if this site was previously selected in the current SME connection attempt, and conn mode is auto */
         if ((TI_TRUE == pCurrentSite->bConsideredForSelect) && (CONNECT_MODE_AUTO == pSme->eConnectMode)) 
         {
-            TRACE6(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: BSSID: %02x:%02x:%02x:%02x:%02x:%02x was selected previously\n", pCurrentSite->bssid[ 0 ], pCurrentSite->bssid[ 1 ], pCurrentSite->bssid[ 2 ], pCurrentSite->bssid[ 3 ], pCurrentSite->bssid[ 4 ], pCurrentSite->bssid[ 5 ]);
             /* get the next site and continue the loop */
             pCurrentSite = scanResultTable_GetNext (pSme->hScanResultTable);
             continue;
@@ -125,7 +118,6 @@ TSiteEntry *sme_Select (TI_HANDLE hSme)
         if (TI_FALSE == sme_SelectSsidMatch (hSme, &(pCurrentSite->ssid), &(pSme->tSsid), pSme->eSsidType))
         /* site doesn't match */
         {
-            TRACE6(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: BSSID: %02x:%02x:%02x:%02x:%02x:%02x doesn't match SSID\n", pCurrentSite->bssid[ 0 ], pCurrentSite->bssid[ 1 ], pCurrentSite->bssid[ 2 ], pCurrentSite->bssid[ 3 ], pCurrentSite->bssid[ 4 ], pCurrentSite->bssid[ 5 ]);
             pCurrentSite->bConsideredForSelect = TI_TRUE; /* don't try this site again */
             /* get the next site and continue the loop */
             pCurrentSite = scanResultTable_GetNext (pSme->hScanResultTable);
@@ -136,7 +128,6 @@ TSiteEntry *sme_Select (TI_HANDLE hSme)
         if (TI_FALSE == sme_SelectBssidMatch (&(pCurrentSite->bssid), &(pSme->tBssid)))
         /* site doesn't match */
         {
-            TRACE6(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: BSSID: %02x:%02x:%02x:%02x:%02x:%02x doesn't match SSID\n", pCurrentSite->bssid[ 0 ], pCurrentSite->bssid[ 1 ], pCurrentSite->bssid[ 2 ], pCurrentSite->bssid[ 3 ], pCurrentSite->bssid[ 4 ], pCurrentSite->bssid[ 5 ]);
             pCurrentSite->bConsideredForSelect = TI_TRUE; /* don't try this site again */
             /* get the next site and continue the loop */
             pCurrentSite = scanResultTable_GetNext (pSme->hScanResultTable);
@@ -147,7 +138,6 @@ TSiteEntry *sme_Select (TI_HANDLE hSme)
         if (TI_FALSE == sme_SelectBssTypeMatch (pCurrentSite->bssType, pSme->eBssType))
         /* site doesn't match */
         {
-            TRACE6(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: BSSID: %02x:%02x:%02x:%02x:%02x:%02x doesn't match BSS type\n", pCurrentSite->bssid[ 0 ], pCurrentSite->bssid[ 1 ], pCurrentSite->bssid[ 2 ], pCurrentSite->bssid[ 3 ], pCurrentSite->bssid[ 4 ], pCurrentSite->bssid[ 5 ]);
             pCurrentSite->bConsideredForSelect = TI_TRUE; /* don't try this site again */
             /* get the next site and continue the loop */
             pCurrentSite = scanResultTable_GetNext (pSme->hScanResultTable);
@@ -175,7 +165,6 @@ TSiteEntry *sme_Select (TI_HANDLE hSme)
                 /* select failed - will rescan in time */
                 return NULL;
             }
-            TRACE6(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: BSSID: %02x:%02x:%02x:%02x:%02x:%02x doesn't match WSC\n", pCurrentSite->bssid[ 0 ], pCurrentSite->bssid[ 1 ], pCurrentSite->bssid[ 2 ], pCurrentSite->bssid[ 3 ], pCurrentSite->bssid[ 4 ], pCurrentSite->bssid[ 5 ]);
             pCurrentSite->bConsideredForSelect = TI_TRUE; /* don't try this site again */
             /* get the next site and continue the loop */
             pCurrentSite = scanResultTable_GetNext (pSme->hScanResultTable);
@@ -188,7 +177,6 @@ TSiteEntry *sme_Select (TI_HANDLE hSme)
             if (TI_FALSE == sme_SelectRsnMatch (hSme, pCurrentSite))
             /* site doesn't match */
             {
-                TRACE6(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: BSSID: %02x:%02x:%02x:%02x:%02x:%02x doesn't match RSN\n", pCurrentSite->bssid[ 0 ], pCurrentSite->bssid[ 1 ], pCurrentSite->bssid[ 2 ], pCurrentSite->bssid[ 3 ], pCurrentSite->bssid[ 4 ], pCurrentSite->bssid[ 5 ]);
                 pCurrentSite->bConsideredForSelect = TI_TRUE; /* don't try this site again */
                 /* get the next site and continue the loop */
                 pCurrentSite = scanResultTable_GetNext (pSme->hScanResultTable);
@@ -200,7 +188,6 @@ TSiteEntry *sme_Select (TI_HANDLE hSme)
         if (TI_FALSE == siteMgr_SelectRateMatch (pSme->hSiteMgr, pCurrentSite))
         /* site doesn't match */
         {
-            TRACE6(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: BSSID: %02x:%02x:%02x:%02x:%02x:%02x doesn't match rates\n", pCurrentSite->bssid[ 0 ], pCurrentSite->bssid[ 1 ], pCurrentSite->bssid[ 2 ], pCurrentSite->bssid[ 3 ], pCurrentSite->bssid[ 4 ], pCurrentSite->bssid[ 5 ]);
             pCurrentSite->bConsideredForSelect = TI_TRUE; /* don't try this site again */
             /* get the next site and continue the loop */
             pCurrentSite = scanResultTable_GetNext (pSme->hScanResultTable);
@@ -209,7 +196,6 @@ TSiteEntry *sme_Select (TI_HANDLE hSme)
         /* if this site RSSI is higher than current maximum, select it */
         if (pCurrentSite->rssi > iSelectedSiteRssi)
         {
-            TRACE6(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_Select: BSSID: %02x:%02x:%02x:%02x:%02x:%02x match and has highest RSSI so far!\n", pCurrentSite->bssid[ 0 ], pCurrentSite->bssid[ 1 ], pCurrentSite->bssid[ 2 ], pCurrentSite->bssid[ 3 ], pCurrentSite->bssid[ 4 ], pCurrentSite->bssid[ 5 ]);
             pSelectedSite = pCurrentSite;
             iSelectedSiteRssi = pCurrentSite->rssi;
         }
@@ -271,9 +257,6 @@ TI_BOOL sme_SelectSsidMatch (TI_HANDLE hSme, TSsid *pSiteSsid, TSsid *pDesiredSs
     if (( pSiteSsid->len > MAX_SSID_LEN ) ||
         ( pDesiredSsid->len > MAX_SSID_LEN ))
     {
-        TRACE3( pSme->hReport, REPORT_SEVERITY_ERROR,
-               "sme_SelectSsidMatch. pSme->tSsid.len=%d or pDesiredSsid->len =%d exceed the limit %d\n",
-                   pSiteSsid->len, pDesiredSsid->len, MAX_SSID_LEN);
         handleRunProblem(PROBLEM_BUF_SIZE_VIOLATION);
         return TI_FALSE;
     }
@@ -376,7 +359,6 @@ TI_BOOL sme_SelectWscMatch (TI_HANDLE hSme, TSiteEntry *pCurrentSite,
     /* if WSC is supported, and more than one AP with PB configuration is found - indicate to abort */
     if ((TI_TRUE == *pbWscPbApFound) && (TIWLN_SIMPLE_CONFIG_PBC_METHOD == pCurrentSite->WSCSiteMode))
     {
-        TRACE1(pSme->hReport, REPORT_SEVERITY_INFORMATION , "sme_SelectWscMatch: WSC mode is %d, and more than one AP with WSC PB found - aborting\n", wscMode);
         *pbWscPbAbort = TI_TRUE;
         return TI_FALSE;
     }
@@ -429,9 +411,6 @@ TI_BOOL sme_SelectRsnMatch (TI_HANDLE hSme, TSiteEntry *pCurrentSite)
     {
         if (uLength + 2 + pRsnIe->hdr[ 1 ] > sizeof (uCurRsnData))
         {
-           TRACE4( pSme->hReport, REPORT_SEVERITY_ERROR,
-                  "sme_SelectRsnMatch. uRsnIECount=%d, uLength=%d; required copy of %d bytes exceeds the buffer limit %d\n",
-                   uRsnIECount, uLength, pRsnIe->hdr[ 1 ] +2, sizeof (uCurRsnData));
            handleRunProblem(PROBLEM_BUF_SIZE_VIOLATION);
            return TI_FALSE;
         }
@@ -443,10 +422,6 @@ TI_BOOL sme_SelectRsnMatch (TI_HANDLE hSme, TSiteEntry *pCurrentSite)
         uRsnIECount++;
     }
     /* sanity check - make sure RSN IE's size is not too big */
-    if (uLength < pCurrentSite->rsnIeLen) 
-    {
-        TRACE2(pSme->hReport, REPORT_SEVERITY_ERROR , "sme_SelectRsnMatch, RSN IE is too long: rsnIeLen=%d, MAX_RSN_IE=%d\n", pCurrentSite->rsnIeLen, MAX_RSN_IE);
-    }
 
     /* call the RSN to evaluate the site */
     tRsnData.pIe = (pCurrentSite->rsnIeLen == 0) ? NULL : uCurRsnData;

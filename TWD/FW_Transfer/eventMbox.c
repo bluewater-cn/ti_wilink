@@ -197,7 +197,6 @@ TI_HANDLE eventMbox_Create(TI_HANDLE hOs)
 	pEventMbox = (TEventMbox*)os_memoryAlloc(hOs,sizeof(TEventMbox));
     if (pEventMbox == NULL)
     {
-        WLAN_OS_REPORT (("eventMbox_Create: Error creating EventMbox object\n"));
         return NULL;
     }
     os_memoryZero (hOs, pEventMbox, sizeof(TEventMbox));
@@ -333,8 +332,6 @@ static void eventMbox_ConfigCbTable(TI_HANDLE hEventMbox)
 
 static void eventMbox_DummyCb(TI_HANDLE hEventMbox)
 {
-	TEventMbox* pEventMbox = (TEventMbox*)hEventMbox;
-TRACE0(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_DummyCb : Called for unregistered event");
 }
 
 
@@ -373,7 +370,6 @@ TI_STATUS eventMbox_InitMboxAddr(TI_HANDLE hEventMbox, fnotify_t fCb, TI_HANDLE 
 	{
 		pEventMbox->EventMboxAddr[0] = pEventMbox->iTxnGenRegSize.iRegBuffer;
 		pEventMbox->EventMboxAddr[1] = pEventMbox->EventMboxAddr[0] + sizeof(EventMailBox_t);
-TRACE3(pEventMbox->hReport, REPORT_SEVERITY_INIT , "eventMbox_ConfigHw: event A Address=0x%x, event B Address=0x%x, sizeof=%d\n", pEventMbox->EventMboxAddr[0], pEventMbox->EventMboxAddr[1], sizeof(EventMailBox_t));
 
 	}
 	return rc;
@@ -402,7 +398,6 @@ static void eventMbox_ReadAddrCb(TI_HANDLE hEventMbox, TI_HANDLE hTxn)
 	pEventMbox->EventMboxAddr[0] = pEventMbox->iTxnGenRegSize.iRegBuffer;
 	pEventMbox->EventMboxAddr[1] = pEventMbox->EventMboxAddr[0] + sizeof(EventMailBox_t);
  
-    TRACE3(pEventMbox->hReport, REPORT_SEVERITY_INIT , "eventMbox_ConfigHw: event A Address=0x%x, event B Address=0x%x, sizeof=%d\n", pEventMbox->EventMboxAddr[0], pEventMbox->EventMboxAddr[1], sizeof(EventMailBox_t));
 
 	/* call back the module that called us before to read our self-address */
 	pEventMbox->fCb(pEventMbox->hCb,TI_OK);
@@ -429,7 +424,6 @@ void eventMbox_InitComplete(TI_HANDLE hEventMbox)
     TEventMbox* pEventMbox;
 	pEventMbox = (TEventMbox*)hEventMbox;
 	
-    TRACE1(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION, "eventMbox_InitComplete: mask = 0x%x\n", pEventMbox->iTxnEventMbox.iEventMboxBuf.eventsMask);
 
 	cmdBld_CfgEventMask(pEventMbox->hCmdBld,pEventMbox->iTxnEventMbox.iEventMboxBuf.eventsMask,NULL,NULL);
 }
@@ -457,12 +451,10 @@ TI_STATUS eventMbox_RegisterEvent(TI_HANDLE hEventMbox,TI_UINT32 EvID,void* fCb,
     TEventMbox *pEventMbox = (TEventMbox *)hEventMbox;
     if (fCb == NULL || hCb == NULL)
     { 
-TRACE0(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_RegisterEvent : NULL parameters\n");
         return TI_NOK;
     }
     if (EvID >= TWD_OWN_EVENT_ALL)
     {
-TRACE0(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_RegisterEvent : Event ID invalid\n");
 		return TI_NOK;
     }
 	pEventMbox->CbTable[EvID].fCb = fCb;
@@ -500,12 +492,10 @@ TI_STATUS eventMbox_ReplaceEvent (TI_HANDLE hEventMbox,
     TEventMbox *pEventMbox = (TEventMbox *)hEventMbox;
     if (fNewCb == NULL || hNewCb == NULL)
     { 
-TRACE0(pEventMbox->hReport, REPORT_SEVERITY_ERROR , "eventMbox_ReplaceEvent: NULL parameters\n");
         return TI_NOK;
     }
     if (EvID >= TWD_OWN_EVENT_ALL)
     {
-TRACE1(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_ReplaceEvent: invalid ID. ID is %d\n", EvID);
         return TI_NOK;
     }
 
@@ -517,7 +507,6 @@ TRACE1(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_ReplaceEvent: inva
 	pEventMbox->CbTable[EvID].fCb = fNewCb;
 	pEventMbox->CbTable[EvID].hCb = hNewCb;
 
-    TRACE0(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION, "eventMbox_ReplaceEvent: EVENT  has registered\n");
 	return TI_OK;
 }
 
@@ -548,10 +537,8 @@ TI_STATUS eventMbox_UnMaskEvent(TI_HANDLE hEventMbox,TI_UINT32 EvID,void* fCb,TI
 
     if (EvID >= TWD_OWN_EVENT_ALL)
     {
-TRACE1(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_UnMaskEvent : Un mask an Invalid event = 0x%x\n",EvID);
 		return TXN_STATUS_ERROR;
     }
-TRACE0(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION, "eventMbox_UnMaskEvent : EVENT  is unmasked\n");
 
 	*pEventMask &= ~eventTable[EvID].bitMask;
 
@@ -583,13 +570,11 @@ TI_STATUS eventMbox_MaskEvent(TI_HANDLE hEventMbox,TI_UINT32 EvID,void* fCb,TI_H
     
     if (EvID >= TWD_OWN_EVENT_ALL)
     {
-TRACE1(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_MaskEvent : Mask an Invalid event = 0x%x\n",EvID);
 		return TXN_STATUS_ERROR;
     }
 
 	*pEventMask |= eventTable[EvID].bitMask;
 
-    TRACE0(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION , "eventMbox_MaskEvent : EVENT  is masked\n");
 
 	aStatus = cmdBld_CfgEventMask(pEventMbox->hCmdBld,*pEventMask,fCb,hCb);
 	return aStatus;
@@ -616,30 +601,6 @@ ETxnStatus eventMbox_Handle(TI_HANDLE hEventMbox,FwStatus_t* pFwStatus)
 
 	pTxn = &pEventMbox->iTxnEventMbox.tEventMbox;
 
-TRACE1(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION, "eventMbox_Handle : Reading from MBOX -- %d",pEventMbox->ActiveMbox);
-
-#ifdef TI_DBG
-    /* Check if missmatch MBOX */
-	if (pEventMbox->ActiveMbox == 0)
-    {
-    	if (pFwStatus->intrStatus & ACX_INTR_EVENT_B)
-        {
-        TRACE0(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_Handle : incorrect MBOX SW MBOX -- A FW MBOX -- B");
-        }
-    }
-	else if (pEventMbox->ActiveMbox == 1)
-    {
-        if (pFwStatus->intrStatus & ACX_INTR_EVENT_A)
-        {
-            TRACE0(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_Handle : incorrect MBOX SW MBOX -- B FW MBOX -- A");
-        }
-    }
-#endif /* TI_DBG */
-    
-	if (pEventMbox->CurrentState != EVENT_MBOX_STATE_IDLE)
-	{
-TRACE0(pEventMbox->hReport, REPORT_SEVERITY_ERROR, "eventMbox_Handle : Receiving event not in Idle state");
-    }
 	pEventMbox->CurrentState = EVENT_MBOX_STATE_READING;
 
 	/* Build the command TxnStruct */
@@ -677,7 +638,6 @@ static void eventMbox_ReadCompleteCB(TI_HANDLE hEventMbox, TTxnStruct *pTxnStruc
     TEventMbox *pEventMbox = (TEventMbox *)hEventMbox;
 	pTxn = &pEventMbox->iTxnGenRegSize.tTxnReg;
 
-TRACE1(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION, "eventMbox_ReadCompleteCB : event vector -- 0x%x\n",pEventMbox->iTxnEventMbox.iEventMboxBuf.eventsVector);
     
 	pEventMbox->iTxnGenRegSize.iRegBuffer = INTR_TRIG_EVENT_ACK;
 
@@ -704,7 +664,6 @@ TRACE1(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION, "eventMbox_ReadComplete
          * This is done in the context of the above events callbacks
          * Don't send the EVENT ACK transaction because the driver stop process includes power off
          */ 
-        TRACE0(pEventMbox->hReport, REPORT_SEVERITY_WARNING, "eventMbox_ReadCompleteCB : State is IDLE ! don't send the EVENT ACK");
         return;
     }
 
@@ -725,25 +684,6 @@ TRACE1(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION, "eventMbox_ReadComplete
  */
 TI_STATUS eventMbox_Print (TI_HANDLE hEventMbox)
 {
-    TEventMbox *pEventMbox = (TEventMbox *)hEventMbox;
-    TI_UINT32 i;
-    TI_UINT32 EvMask   = pEventMbox->iTxnEventMbox.iEventMboxBuf.eventsMask;
-    TI_UINT32 EvVector = pEventMbox->iTxnEventMbox.iEventMboxBuf.eventsVector;
-
-    TRACE0(pEventMbox->hReport, REPORT_SEVERITY_CONSOLE, "------------------------- EventMbox  Print ----------------------------\n");
-
-    TRACE1(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION, " eventMbox_HandleEvent: Event Vector = 0x%x\n", EvVector);
-    TRACE1(pEventMbox->hReport, REPORT_SEVERITY_INFORMATION, " eventMbox_HandleEvent: Event Mask = 0x%x\n", EvMask);
-    TRACE1(pEventMbox->hReport, REPORT_SEVERITY_CONSOLE, " Total Number Of Compound Event = %d: \n", pEventMbox->uCompounEvCount);
-    TRACE1(pEventMbox->hReport, REPORT_SEVERITY_CONSOLE, " Total Number Of Events = %d: \n", pEventMbox->uTotalEvCount);
-    TRACE0(pEventMbox->hReport, REPORT_SEVERITY_CONSOLE, "\t\t\t\t *** Event Counters *** :\n");
-    for (i = 0; i < TWD_OWN_EVENT_ALL; i++)
-    {
-        TRACE2(pEventMbox->hReport, REPORT_SEVERITY_CONSOLE, " %d) Event Name = EVENT , Number of Event = %d\n", i, pEventMbox->CbTable[i].uCount);
-    }
-
-    TRACE0(pEventMbox->hReport, REPORT_SEVERITY_CONSOLE, "------------------------- EventMbox  Print End ----------------------------\n");
-
     return TI_OK;
 }
 

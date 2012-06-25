@@ -185,7 +185,6 @@ void txXfer_RegisterCb (TI_HANDLE hTxXfer, TI_UINT32 CallBackID, void *CBFunc, T
 {
     TTxXferObj* pTxXfer = (TTxXferObj*)hTxXfer;
 
-    TRACE3(pTxXfer->hReport, REPORT_SEVERITY_INFORMATION, "txXfer_RegisterCb: CallBackID=%d, CBFunc=0x%x, CBObj=0x%x\n", CallBackID, CBFunc, CBObj);
 
     switch(CallBackID)
     {
@@ -198,7 +197,6 @@ void txXfer_RegisterCb (TI_HANDLE hTxXfer, TI_UINT32 CallBackID, void *CBFunc, T
             break;
 
         default:
-            TRACE0(pTxXfer->hReport, REPORT_SEVERITY_ERROR, " - Illegal value\n");
             break;
     }
 }
@@ -329,10 +327,8 @@ static ETxnStatus txXfer_SendAggregatedPkts (TTxXferObj *pTxXfer, TI_BOOL bLastP
 
 #ifdef TI_DBG
     pTxXfer->aDbgCountPktAggreg[pTxXfer->uAggregPktsNum]++;
-    TRACE5(pTxXfer->hReport, REPORT_SEVERITY_INFORMATION, "txXfer_SendAggregatedPkts: Status=%d, NumPkts=%d, AggregLen=%d, pFirstPkt=0x%x, pLastPkt=0x%x\n", eStatus, pTxXfer->uAggregPktsNum, pTxXfer->uAggregPktsLen, pTxXfer->pAggregFirstPkt, pTxXfer->pAggregLastPkt);
     if (eStatus == TXN_STATUS_ERROR)
     {
-        TRACE5(pTxXfer->hReport, REPORT_SEVERITY_ERROR, "txXfer_SendAggregatedPkts: Status=%d, NumPkts=%d, AggregLen=%d, pFirstPkt=0x%x, pLastPkt=0x%x\n", eStatus, pTxXfer->uAggregPktsNum, pTxXfer->uAggregPktsLen, pTxXfer->pAggregFirstPkt, pTxXfer->pAggregLastPkt);
         return eStatus;
     }
 #endif  /* TI_DBG */
@@ -407,7 +403,6 @@ static void txXfer_TransferDoneCb (TI_HANDLE hTxXfer, TTxnStruct *pTxn)
         pCurrPkt = pCurrPkt->pNextAggregEntry;
     }
 
-    TRACE3(pTxXfer->hReport, REPORT_SEVERITY_INFORMATION, "txXfer_TransferDoneCb: NumPkts=%d, pInputPkt=0x%x, pCurrPkt=0x%x\n", i + 1, pInputPkt, pCurrPkt);
 }
 
 
@@ -422,21 +417,6 @@ void txXfer_ClearStats (TI_HANDLE hTxXfer)
 
 void txXfer_PrintStats (TI_HANDLE hTxXfer)
 {
-    TTxXferObj *pTxXfer = (TTxXferObj*)hTxXfer;
-    TI_UINT32   i;
-    
-    WLAN_OS_REPORT(("Print Tx Xfer module info\n"));
-    WLAN_OS_REPORT(("=========================\n"));
-    WLAN_OS_REPORT(("uAggregMaxPkts     = %d\n", pTxXfer->uAggregMaxPkts));
-    WLAN_OS_REPORT(("uAggregMaxLen      = %d\n", pTxXfer->uAggregMaxLen));
-    WLAN_OS_REPORT(("uAggregPktsNum     = %d\n", pTxXfer->uAggregPktsNum));
-    WLAN_OS_REPORT(("uAggregPktsLen     = %d\n", pTxXfer->uAggregPktsLen));
-    WLAN_OS_REPORT(("uPktsCntr          = %d\n", pTxXfer->uPktsCntr));
-    WLAN_OS_REPORT(("uPktsCntrTxnIndex  = %d\n", pTxXfer->uPktsCntrTxnIndex));
-    for (i = 1; i < DBG_MAX_AGGREG_PKTS; i++)
-    {
-        WLAN_OS_REPORT(("uCountPktAggreg-%2d = %d\n", i, pTxXfer->aDbgCountPktAggreg[i]));
-    }
 }
 
 #endif /* TI_DBG */

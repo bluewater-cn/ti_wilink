@@ -67,7 +67,6 @@ void scanConcentratorDebugFunction( TI_HANDLE hScanCncn, TI_HANDLE hTWD, TI_UINT
         break;
 
     default:
-        WLAN_OS_REPORT(("Invalid function type in scan concentrator debug function: %d\n", funcType));
         break;
     }
 }
@@ -81,9 +80,5 @@ void scanConcentratorDebugFunction( TI_HANDLE hScanCncn, TI_HANDLE hTWD, TI_UINT
  */
 void printScanConcentratorDbgFunctions(void)
 {
-    WLAN_OS_REPORT(("   Scan Concentrator Debug Functions   \n"));
-    WLAN_OS_REPORT(("---------------------------------------\n"));
-    WLAN_OS_REPORT(("1400 - Print the scan concentrator Debug Help\n"));
-    WLAN_OS_REPORT(("1401 - Print the scan SRV status\n"));
 }
 

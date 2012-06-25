@@ -183,7 +183,6 @@ TTxCtrlBlk *txCtrlBlk_Alloc (TI_HANDLE hTxCtrlBlk)
 	/* If no free entries, print error (not expected to happen) and return NULL. */
 	if (pCurrentEntry->pNextFreeEntry == NULL)
 	{
-TRACE1(pTxCtrlBlk->hReport, REPORT_SEVERITY_ERROR, "txCtrlBlk_alloc():  No free entry,  UsedEntries=%d\n", pTxCtrlBlk->uNumUsedEntries);
         context_LeaveCriticalSection (pTxCtrlBlk->hContext);
 		return NULL;
 	}
@@ -221,7 +220,6 @@ void txCtrlBlk_Free (TI_HANDLE hTxCtrlBlk, TTxCtrlBlk *pCurrentEntry)
 	/* If the pointed entry is already free, print error and exit (not expected to happen). */
 	if (pCurrentEntry->pNextFreeEntry != 0)
 	{
-TRACE2(pTxCtrlBlk->hReport, REPORT_SEVERITY_ERROR, "txCtrlBlk_free(): Entry %d alredy free, UsedEntries=%d\n", 			pCurrentEntry->tTxDescriptor.descID, pTxCtrlBlk->uNumUsedEntries);
 		return;
 	}
 	pTxCtrlBlk->uNumUsedEntries--;
@@ -260,25 +258,6 @@ TTxCtrlBlk *txCtrlBlk_GetPointer (TI_HANDLE hTxCtrlBlk, TI_UINT8 descId)
 #ifdef TI_DBG
 void txCtrlBlk_PrintTable (TI_HANDLE hTxCtrlBlk)
 {
-	TTxCtrlBlkObj *pTxCtrlBlk = (TTxCtrlBlkObj *)hTxCtrlBlk;
-	TI_UINT8 entry;
-
-	WLAN_OS_REPORT((" Tx-Control-Block Information,  UsedEntries=%d\n", pTxCtrlBlk->uNumUsedEntries));
-	WLAN_OS_REPORT(("==============================================\n"));
-	
-	for(entry = 0; entry < CTRL_BLK_ENTRIES_NUM; entry++)
-	{
-		WLAN_OS_REPORT(("Entry %d: DescID=%d, Next=0x%x, Len=%d, StartTime=%d, TID=%d, ExtraBlks=%d, TotalBlks=%d, Flags=0x%x\n", 
-			entry, 
-			pTxCtrlBlk->aTxCtrlBlkTbl[entry].tTxDescriptor.descID,
-			pTxCtrlBlk->aTxCtrlBlkTbl[entry].pNextFreeEntry,
-			ENDIAN_HANDLE_WORD(pTxCtrlBlk->aTxCtrlBlkTbl[entry].tTxDescriptor.length),
-			ENDIAN_HANDLE_LONG(pTxCtrlBlk->aTxCtrlBlkTbl[entry].tTxDescriptor.startTime),
-            pTxCtrlBlk->aTxCtrlBlkTbl[entry].tTxDescriptor.tid,
-			pTxCtrlBlk->aTxCtrlBlkTbl[entry].tTxDescriptor.extraMemBlks,
-            pTxCtrlBlk->aTxCtrlBlkTbl[entry].tTxDescriptor.totalMemBlks,
-            pTxCtrlBlk->aTxCtrlBlkTbl[entry].tTxPktParams.uFlags));
-	}
 }
 #endif /* TI_DBG */
 

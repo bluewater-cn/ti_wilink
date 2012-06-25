@@ -258,7 +258,6 @@ TI_STATUS debugFunction(TStadHandlesList *pStadHandles, TI_UINT32 functionNumber
         break;
 
     default:
-        WLAN_OS_REPORT(("Invalid debug function module number: %d\n\n", moduleNumber)); 
         break;
     }
 
@@ -267,32 +266,6 @@ TI_STATUS debugFunction(TStadHandlesList *pStadHandles, TI_UINT32 functionNumber
 
 static void printMenue(void)
 {
-    WLAN_OS_REPORT(("   Debug main menu (p <num>)\n"));
-    WLAN_OS_REPORT(("-----------------------------\n"));
-
-    WLAN_OS_REPORT(("Association             100\n")); 
-    WLAN_OS_REPORT(("Utils                   200\n"));
-    WLAN_OS_REPORT(("Tx                      300\n"));
-    WLAN_OS_REPORT(("Rx                      350\n"));
-    WLAN_OS_REPORT(("Ctrl                    400\n"));
-    WLAN_OS_REPORT(("SiteMgr                 500\n"));
-    WLAN_OS_REPORT(("Connection              600\n"));
-    WLAN_OS_REPORT(("Rsn                     700\n"));
-    WLAN_OS_REPORT(("Hal Ctrl                800\n"));
-    WLAN_OS_REPORT(("QOS                    1000\n"));
-    WLAN_OS_REPORT(("Measurement            1100\n"));
-    WLAN_OS_REPORT(("PowerMgr               1200\n"));
-    WLAN_OS_REPORT(("HAL Ctrl Buffer        1300\n"));
-    WLAN_OS_REPORT(("Scan concentrator      1400\n"));
-    WLAN_OS_REPORT(("Scan Manager           1500\n"));
-    WLAN_OS_REPORT(("Roaming Manager        1600\n"));
-    WLAN_OS_REPORT(("SCR                    1700\n"));
-    WLAN_OS_REPORT(("Soft Gemini            1800\n"));
-    WLAN_OS_REPORT(("SME                    1900\n"));
-    WLAN_OS_REPORT(("Health Monitor         2000\n"));
-    WLAN_OS_REPORT(("MIB                    2100\n"));
-    WLAN_OS_REPORT(("FW Debug               2200\n"));
-    WLAN_OS_REPORT(("TwIf                   2300\n"));
 }
 
 
@@ -325,7 +298,6 @@ static void utilsDebugFunction (TStadHandlesList *pStadHandles, TI_UINT32 funcTy
             break;
     
         default:
-       		WLAN_OS_REPORT(("utilsDebugFunction(): Invalid function type: %d\n", funcType));
             break;
     }
 }
@@ -337,11 +309,5 @@ static void utilsDebugFunction (TStadHandlesList *pStadHandles, TI_UINT32 funcTy
  */
 static void printUtilsDbgFunctions (void)
 {
-    WLAN_OS_REPORT(("   Utils Debug Functions   \n"));
-	WLAN_OS_REPORT(("---------------------------\n"));
-	WLAN_OS_REPORT(("200 - Print the Utils Debug Help\n"));
-	WLAN_OS_REPORT(("201 - Print Context module info\n"));
-	WLAN_OS_REPORT(("202 - Print Timer module info\n"));
-	WLAN_OS_REPORT(("203 - Print the trace buffer\n"));
 }
 

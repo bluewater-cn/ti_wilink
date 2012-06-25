@@ -81,9 +81,6 @@ static void SoftGemini_RemoveProtectiveModeParameters(TI_HANDLE hSoftGemini);
 static void SoftGemini_setConfigParam(TI_HANDLE hSoftGemini, TI_UINT32 *param);
 static void SoftGemini_EnableProtectiveMode(TI_HANDLE hSoftGemini);
 static void SoftGemini_DisableProtectiveMode(TI_HANDLE hSoftGemini);
-#ifdef REPORT_LOG
-static char* SoftGemini_ConvertModeToString(ESoftGeminiEnableModes SoftGeminiEnable);
-#endif
 
 /********************************************************************************/
 /*						Interface functions Implementation.						*/
@@ -121,10 +118,6 @@ void SoftGemini_SetPSmode(TI_HANDLE hSoftGemini)
 			SoftGemini_EnableProtectiveMode(hSoftGemini);
 		}
 	}
-	else 
-        {
-          TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_ERROR, "  SoftGemini_SetPSmode() - Error hSoftGemini= NULL \n");
-        }
 }
 
 /************************************************************************
@@ -160,10 +153,6 @@ void SoftGemini_unSetPSmode(TI_HANDLE hSoftGemini)
 			SoftGemini_RemoveProtectiveModeParameters(hSoftGemini);
 		}
 	}
-    else
-    {
-		TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_ERROR, " SoftGemini_unSetPSmode() - Error hSoftGemini= NULL \n");
-    }
 }
 
 /************************************************************************
@@ -275,15 +264,6 @@ TI_STATUS SoftGemini_SetDefaults (TI_HANDLE hSoftGemini, SoftGeminiInitParams_t 
 		status = SoftGemini_setEnableParam(hSoftGemini, pSoftGeminiInitParams->SoftGeminiEnable, TI_FALSE);
 	}
 
-	if (status == TI_OK)
-	{
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INIT, "  SoftGemini_config() - configured successfully\n");
-	}
-	else
-	{
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_ERROR, "  SoftGemini_config() - Error configuring module \n");
-	}
-
 	return status;
 }
 
@@ -336,7 +316,6 @@ TI_STATUS SoftGemini_setParam(TI_HANDLE	hSoftGemini,
 	SoftGemini_t *pSoftGemini = (SoftGemini_t *)hSoftGemini;
 	TI_STATUS return_value = TI_OK;
 
-TRACE1(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "  SoftGemini_setParam() (0x%x)\n", pParam->paramType);
 	
 	switch(pParam->paramType)
 	{
@@ -365,7 +344,6 @@ TRACE1(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "  SoftGemini_setParam
 		break;
 		
 	default:
-TRACE1(pSoftGemini->hReport, REPORT_SEVERITY_ERROR, "  SoftGemini_setParam(), Params is not supported, %d\n\n", pParam->paramType);
 		return PARAM_NOT_SUPPORTED;
 	}
 
@@ -416,7 +394,6 @@ static TI_STATUS SoftGemini_setEnableParam(TI_HANDLE hSoftGemini, ESoftGeminiEna
 	TTwdParamInfo	param;
 	TI_STATUS return_value = TI_OK;
 
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "  setSoftGeminiEnableParam() - Old value = , New value = \n");
 
 
     /*
@@ -424,7 +401,6 @@ TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "  setSoftGeminiEnable
      */
     if ( pSoftGemini->bPsPollFailureActive )
     {
-        TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "  setSoftGeminiEnableParam() - while PsPollFailure is active\n");
 
         pSoftGemini->PsPollFailureLastEnableValue = SoftGeminiEnable;
         return TI_OK;
@@ -440,7 +416,6 @@ TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "  setSoftGeminiEnable
 
 	if ((pSoftGemini->SoftGeminiEnable == SoftGeminiEnable) && !recovery)
 	{
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_ERROR, "   - setting same value \n");
 		return TI_NOK;
 	}
 
@@ -475,17 +450,11 @@ TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_ERROR, "   - setting same value \n"
 		break;
 
 	default:
-TRACE1(pSoftGemini->hReport, REPORT_SEVERITY_ERROR, " defualt :%d\n",SoftGeminiEnable);
 		return TI_NOK;
 	}
 
 	/* Pass to the new enable state */
 	pSoftGemini->SoftGeminiEnable = SoftGeminiEnable;
-
-	if (TI_OK != return_value)
-	{
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_ERROR, " can't configure enable param to FW :\n");
-	}
 	
 	return return_value;
 }
@@ -516,66 +485,6 @@ static void SoftGemini_setConfigParam(TI_HANDLE hSoftGemini, TI_UINT32 *param)
 ***************************************************************************/
 void SoftGemini_printParams(TI_HANDLE hSoftGemini)
 {
-#ifdef REPORT_LOG
-
-	SoftGemini_t *pSoftGemini = (SoftGemini_t *)hSoftGemini;
-	TSoftGeminiParams *SoftGeminiParam = &pSoftGemini->SoftGeminiParam;
-
-	WLAN_OS_REPORT(("[0]:  coexBtPerThreshold = %d\n", SoftGeminiParam->coexParams[SOFT_GEMINI_BT_PER_THRESHOLD])); 
-	WLAN_OS_REPORT(("[1]:  coexHv3MaxOverride = %d \n", SoftGeminiParam->coexParams[SOFT_GEMINI_HV3_MAX_OVERRIDE])); 
-	WLAN_OS_REPORT(("[2]:  coexBtNfsSampleInterval = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_BT_NFS_SAMPLE_INTERVAL])); 
-	WLAN_OS_REPORT(("[3]:  coexBtLoadRatio = %d (%)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_BT_LOAD_RATIO])); 
-	WLAN_OS_REPORT(("[4]:  coexAutoPsMode = %s \n", (SoftGeminiParam->coexParams[SOFT_GEMINI_AUTO_PS_MODE]?"Enabled":"Disabled"))); 
-	WLAN_OS_REPORT(("[5]:  coexAutoScanEnlargedNumOfProbeReqPercent = %d (%)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_AUTO_SCAN_PROBE_REQ])); 
-	WLAN_OS_REPORT(("[6]:  coexHv3AutoScanEnlargedScanWinodowPercent = %d (%)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_ACTIVE_SCAN_DURATION_FACTOR_HV3]));
-	WLAN_OS_REPORT(("[7]:  coexAntennaConfiguration = %s (0 = Single, 1 = Dual) \n", (SoftGeminiParam->coexParams[SOFT_GEMINI_ANTENNA_CONFIGURATION]?"Dual":"Single")));
-	WLAN_OS_REPORT(("[8]:  coexMaxConsecutiveBeaconMissPrecent = %d (%)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_BEACON_MISS_PERCENT]));
-	WLAN_OS_REPORT(("[9]:  coexAPRateAdapationThr = %d\n", SoftGeminiParam->coexParams[SOFT_GEMINI_RATE_ADAPT_THRESH]));
-	WLAN_OS_REPORT(("[10]: coexAPRateAdapationSnr = %d\n", SoftGeminiParam->coexParams[SOFT_GEMINI_RATE_ADAPT_SNR]));
-	WLAN_OS_REPORT(("[11]: coexWlanPsBtAclMasterMinBR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_BT_ACL_MASTER_MIN_BR]));
-	WLAN_OS_REPORT(("[12]: coexWlanPsBtAclMasterMaxBR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_BT_ACL_MASTER_MAX_BR]));
-	WLAN_OS_REPORT(("[13]: coexWlanPsMaxBtAclMasterBR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_MAX_BT_ACL_MASTER_BR]));
-    WLAN_OS_REPORT(("[14]: coexWlanPsBtAclSlaveMinBR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_BT_ACL_SLAVE_MIN_BR]));
-    WLAN_OS_REPORT(("[15]: coexWlanPsBtAclSlaveMaxBR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_BT_ACL_SLAVE_MAX_BR]));
-    WLAN_OS_REPORT(("[16]: coexWlanPsMaxBtAclSlaveBR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_MAX_BT_ACL_SLAVE_BR]));
-    WLAN_OS_REPORT(("[17]: coexWlanPsBtAclMasterMinEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_BT_ACL_MASTER_MIN_EDR]));
-    WLAN_OS_REPORT(("[18]: coexWlanPsBtAclMasterMaxEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_BT_ACL_MASTER_MAX_EDR]));
-    WLAN_OS_REPORT(("[19]: coexWlanPsMaxBtAclMasterEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_MAX_BT_ACL_MASTER_EDR]));
-    WLAN_OS_REPORT(("[20]: coexWlanPsBtAclSlaveMinEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_BT_ACL_SLAVE_MIN_EDR]));
-    WLAN_OS_REPORT(("[21]: coexWlanPsBtAclSlaveMaxEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_BT_ACL_SLAVE_MAX_EDR]));
-    WLAN_OS_REPORT(("[22]: coexWlanPsMaxBtAclSlaveEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_PS_MAX_BT_ACL_SLAVE_EDR]));
-	WLAN_OS_REPORT(("[23]: coexRxt = %d (usec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_RXT]));
-	WLAN_OS_REPORT(("[24]: coexTxt = %d (usec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_TXT]));
-	WLAN_OS_REPORT(("[25]: coexAdaptiveRxtTxt = %s \n", (SoftGeminiParam->coexParams[SOFT_GEMINI_ADAPTIVE_RXT_TXT]?"Enabled":"Disabled"))); 
-	WLAN_OS_REPORT(("[26]: coexPsPollTimeout = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_PS_POLL_TIMEOUT]));
-	WLAN_OS_REPORT(("[27]: coexUpsdTimeout = %d (msec) \n", SoftGeminiParam->coexParams[SOFT_GEMINI_UPSD_TIMEOUT]));
-	WLAN_OS_REPORT(("[28]: coexWlanActiveBtAclMasterMinEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_ACTIVE_BT_ACL_MASTER_MIN_EDR]));
-	WLAN_OS_REPORT(("[29]: coexWlanActiveBtAclMasterMaxEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_ACTIVE_BT_ACL_MASTER_MAX_EDR]));
-	WLAN_OS_REPORT(("[30]: coexWlanActiveMaxBtAclMasterEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_ACTIVE_MAX_BT_ACL_MASTER_EDR]));
-    WLAN_OS_REPORT(("[31]: coexWlanActiveBtAclSlaveMinEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_ACTIVE_BT_ACL_SLAVE_MIN_EDR]));
-	WLAN_OS_REPORT(("[32]: coexWlanActiveBtAclSlaveMaxEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_ACTIVE_BT_ACL_SLAVE_MAX_EDR]));
-    WLAN_OS_REPORT(("[33]: coexWlanActiveMaxBtAclSlaveEDR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_ACTIVE_MAX_BT_ACL_SLAVE_EDR]));
-    WLAN_OS_REPORT(("[34]: coexWlanActiveBtAclMinBR = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_ACTIVE_BT_ACL_MIN_BR]));
-    WLAN_OS_REPORT(("[35]: coexWlanActiveBtAclMinBr = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_ACTIVE_BT_ACL_MAX_BR]));
-    WLAN_OS_REPORT(("[36]: coexWlanActiveMaxBtAclBr = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_WLAN_ACTIVE_MAX_BT_ACL_BR]));
-    WLAN_OS_REPORT(("[37]: coexHv3AutoEnlargePassiveScanWindowPercent = %d (%)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_PASSIVE_SCAN_DURATION_FACTOR_HV3]));
-    WLAN_OS_REPORT(("[38]: coexA2DPAutoEnlargePassiveScanWindowPercent = %d (%) \n", SoftGeminiParam->coexParams[SOFT_GEMINI_PASSIVE_SCAN_DURATION_FACTOR_A2DP]));
-    WLAN_OS_REPORT(("[39]: coexPassiveScanA2dpBtTime  = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_PASSIVE_SCAN_A2DP_BT_TIME]));
-    WLAN_OS_REPORT(("[40]: coexPassiveScanA2dpWlanTime = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_PASSIVE_SCAN_A2DP_WLAN_TIME]));
-	WLAN_OS_REPORT(("[41]: CoexHv3MaxServed = %d \n", SoftGeminiParam->coexParams[SOFT_GEMINI_HV3_MAX_SERVED]));
-	WLAN_OS_REPORT(("[42]: coexDhcpTime = %d (msec)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_DHCP_TIME]));
-	WLAN_OS_REPORT(("[43]: coexA2dpAutoScanEnlargedScanWinodowPercent = %d (%)\n", SoftGeminiParam->coexParams[SOFT_GEMINI_ACTIVE_SCAN_DURATION_FACTOR_A2DP]));
-	WLAN_OS_REPORT(("[44]: coexTempParam1 = %d \n", SoftGeminiParam->coexParams[SOFT_GEMINI_TEMP_PARAM_1]));
-	WLAN_OS_REPORT(("[45]: coexTempParam2 = %d \n", SoftGeminiParam->coexParams[SOFT_GEMINI_TEMP_PARAM_2]));
-	WLAN_OS_REPORT(("[46]: coexTempParam3 = %d \n", SoftGeminiParam->coexParams[SOFT_GEMINI_TEMP_PARAM_3]));
-	WLAN_OS_REPORT(("[47]: coexTempParam4 = %d \n", SoftGeminiParam->coexParams[SOFT_GEMINI_TEMP_PARAM_4]));
-	WLAN_OS_REPORT(("[48]: coexTempParam5 = %d \n", SoftGeminiParam->coexParams[SOFT_GEMINI_TEMP_PARAM_5]));
-	WLAN_OS_REPORT(("Enable mode : %s\n", SoftGemini_ConvertModeToString(pSoftGemini->SoftGeminiEnable))); 
-	WLAN_OS_REPORT(("Driver Enabled : %s\n",(pSoftGemini->bDriverEnabled ? "YES" : "NO"))); 
-	WLAN_OS_REPORT(("Protective mode : %s\n", (pSoftGemini->bProtectiveMode ? "ON" : "OFF"))); 
-    WLAN_OS_REPORT(("PsPoll failure active : %s\n", (pSoftGemini->bPsPollFailureActive ? "YES" : "NO"))); 
-
-#endif
 }
 
 /***************************************************************************
@@ -614,8 +523,6 @@ static TI_STATUS SoftGemini_EnableDriver(TI_HANDLE hSoftGemini)
 	SoftGemini_t	*pSoftGemini = (SoftGemini_t *)hSoftGemini;
 	TI_STATUS return_value = TI_OK;
 
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "\n");
-
 	pSoftGemini->bDriverEnabled = TI_TRUE;
 
 	/* Check if coexAutoPsMode - Co-ex is enabled to enter/exit P.S */
@@ -641,8 +548,6 @@ static TI_STATUS SoftGemini_DisableDriver(TI_HANDLE hSoftGemini)
 {
 	SoftGemini_t	*pSoftGemini = (SoftGemini_t *)hSoftGemini;
 	TI_STATUS return_value = TI_OK;
-
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "\n");
 
 	pSoftGemini->bDriverEnabled = TI_FALSE;
 
@@ -681,19 +586,11 @@ static TI_STATUS SoftGemini_SetPS(SoftGemini_t	*pSoftGemini)
 	{
 		pBssInfo = currBSS_getBssInfo(pSoftGemini->hCurrBss);
 	}
-    else
-    {
-		TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_ERROR, "SoftGemini_SetPS: hCurrBss = NULL!!!\n");
-    }
-
-    TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "\n");
 
 	if (pBssInfo)
 	{
 		if ((pBssInfo->band == RADIO_BAND_2_4_GHZ))
 		{
-            TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, " SG-setPS: band == RADIO_BAND_2_4_GHZ");
-
 	        /* Set Params to Power Mgr for SG priority */
 	        param.paramType = POWER_MGR_POWER_MODE;
 	        param.content.powerMngPowerMode.PowerMode = POWER_MODE_PS_ONLY;
@@ -704,10 +601,6 @@ static TI_STATUS SoftGemini_SetPS(SoftGemini_t	*pSoftGemini)
 	        param.paramType = POWER_MGR_ENABLE_PRIORITY;
 	        param.content.powerMngPriority = POWER_MANAGER_SG_PRIORITY;
 	        return powerMgr_setParam(pSoftGemini->hPowerMgr,&param);
-        }
-        else
-        {
-            TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, " SG-setPS: band == RADIO_BAND_5_GHZ");
         }
 	}
 	return TI_OK;
@@ -724,8 +617,6 @@ static TI_STATUS SoftGemini_SetPS(SoftGemini_t	*pSoftGemini)
 static TI_STATUS SoftGemini_unSetPS(SoftGemini_t	*pSoftGemini)
 {
 	paramInfo_t param;
-
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, ", SG-unSetPS \n");
 
 	/* disable SG priority for Power Mgr*/
 	param.paramType = POWER_MGR_DISABLE_PRIORITY;
@@ -761,9 +652,6 @@ void SoftGemini_EnableProtectiveMode(TI_HANDLE hSoftGemini)
 								   pSoftGemini->SoftGeminiParam.coexParams[SOFT_GEMINI_HV3_MAX_OVERRIDE], 
 								   pSoftGemini->SoftGeminiParam.coexParams[SOFT_GEMINI_ACTIVE_SCAN_DURATION_FACTOR_HV3]);
 
-    /* Call the power manager to enter short doze */
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, " SoftGemini_EnableProtectiveMode set SD");
-
 	/* Set Params to Power Mgr for SG priority */
 	param.paramType = POWER_MGR_POWER_MODE;
 	param.content.powerMngPowerMode.PowerMode = POWER_MODE_SHORT_DOZE;
@@ -782,8 +670,6 @@ TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, " SoftGemini_EnablePro
 void SoftGemini_DisableProtectiveMode(TI_HANDLE hSoftGemini)
 {
 	SoftGemini_t	*pSoftGemini = (SoftGemini_t *)hSoftGemini;
-
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "\n");
 
 	pSoftGemini->bProtectiveMode = TI_FALSE;
 
@@ -805,8 +691,6 @@ void SoftGemini_RemoveProtectiveModeParameters(TI_HANDLE hSoftGemini)
 {
 	SoftGemini_t	*pSoftGemini = (SoftGemini_t *)hSoftGemini;
 	paramInfo_t  	param;
-
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "\n");
 
 	/* don't use the SG roaming parameters */
 	currBSS_SGconfigureBSSLoss(pSoftGemini->hCurrBss,0,TI_FALSE);
@@ -839,7 +723,6 @@ void SoftGemini_SenseIndicationCB( TI_HANDLE hSoftGemini, char* str, TI_UINT32 s
 	SoftGemini_t	*pSoftGemini = (SoftGemini_t *)hSoftGemini;
 
 	if (pSoftGemini->SoftGeminiEnable == SG_DISABLE) {
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_WARNING, ": SG is disabled, existing");
 		return;
 	}
 
@@ -868,8 +751,6 @@ TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_WARNING, ": SG is disabled, existin
 void SoftGemini_ProtectiveIndicationCB( TI_HANDLE hSoftGemini, char* str, TI_UINT32 strLen )
 {
 	SoftGemini_t	*pSoftGemini = (SoftGemini_t *)hSoftGemini;
-	
-TRACE1(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, " with 0x%x\n",*str);
 
 	if (SG_DISABLE != pSoftGemini->SoftGeminiEnable)
 	{
@@ -881,35 +762,8 @@ TRACE1(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, " with 0x%x\n",*str);
 		{
 			SoftGemini_DisableProtectiveMode(hSoftGemini);
 		}
-		else
-		{
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, " : Protective mode  called when Protective mode is  \n");
-		}
-	}
-	else
-	{
-TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_WARNING, " : Protective mode  called when SG mode is  ? \n");
 	}
 }
-
-/***************************************************************************
-*					SoftGemini_ConvertModeToString  		    	       *
-****************************************************************************/
-#ifdef REPORT_LOG
-
-char* SoftGemini_ConvertModeToString(ESoftGeminiEnableModes SoftGeminiEnable)
-{
-	switch(SoftGeminiEnable)
-	{
-	case SG_PROTECTIVE:				return "SG_PROTECTIVE";
-	case SG_DISABLE:			    return "SG_DISABLE";
-	case SG_OPPORTUNISTIC:     return "SG_OPPORTUNISTIC";
-	default:
-		return "ERROR";
-	}
-}
-
-#endif
 
 /***************************************************************************
 *					SoftGemini_getSGMode						  		    	       *
@@ -935,13 +789,11 @@ TI_STATUS SoftGemini_handleRecovery(TI_HANDLE hSoftGemini)
 	realSoftGeminiEnableMode = pSoftGemini->SoftGeminiEnable;
     /* Disable the SG */
     SoftGemini_setEnableParam(hSoftGemini, SG_DISABLE, TI_TRUE);
-    TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "Disable SG \n");
 
 	pSoftGemini->SoftGeminiEnable = realSoftGeminiEnableMode;
 	/* Set enable param */
 
 	SoftGemini_setEnableParam(hSoftGemini, pSoftGemini->SoftGeminiEnable, TI_TRUE);
-    TRACE1(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "Set SG to-%d\n", pSoftGemini->SoftGeminiEnable);
 
 	/* Config the params to FW */
 	
@@ -960,8 +812,6 @@ void SoftGemini_startPsPollFailure(TI_HANDLE hSoftGemini)
 	{
     SoftGemini_t	*pSoftGemini = (SoftGemini_t *)hSoftGemini;
 
-    TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "\n");
-
     if ( (!pSoftGemini->bPsPollFailureActive) && (pSoftGemini->SoftGeminiParam.coexParams[SOFT_GEMINI_AUTO_PS_MODE] == TI_TRUE) )
     {
         pSoftGemini->PsPollFailureLastEnableValue = pSoftGemini->SoftGeminiEnable;
@@ -973,10 +823,6 @@ void SoftGemini_startPsPollFailure(TI_HANDLE hSoftGemini)
 	}
 
         pSoftGemini->bPsPollFailureActive = TI_TRUE;
-    }
-    else /* Calling SoftGemini_startPsPollFailure twice ? */
-	{
-        TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_WARNING, "Calling  SoftGemini_startPsPollFailure while bPsPollFailureActive is TRUE\n");
     }
 	}
 
@@ -991,8 +837,6 @@ void SoftGemini_endPsPollFailure(TI_HANDLE hSoftGemini)
 {
     SoftGemini_t	*pSoftGemini = (SoftGemini_t *)hSoftGemini;
 
-    TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_INFORMATION, "\n");
-
     if ( pSoftGemini->bPsPollFailureActive ) 
     {
         pSoftGemini->bPsPollFailureActive = TI_FALSE;
@@ -1002,10 +846,6 @@ void SoftGemini_endPsPollFailure(TI_HANDLE hSoftGemini)
         {
 			SoftGemini_setEnableParam(hSoftGemini, pSoftGemini->PsPollFailureLastEnableValue, TI_FALSE);
         }
-    }
-    else /* Calling SoftGemini_endPsPollFailure twice ? */
-    {
-        TRACE0(pSoftGemini->hReport, REPORT_SEVERITY_WARNING, "Calling  SoftGemini_endPsPollFailure while bPsPollFailureActive is FALSE\n");
     }
 }
 

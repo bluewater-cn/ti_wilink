@@ -142,8 +142,6 @@ TI_STATUS RequestHandler_config(TI_HANDLE 	hRequestHandler,
 	/* Clearing the Request Array , mostly due to parallel bit */
 	os_memoryZero(pRequestHandler->hOs, pRequestHandler->reqArr, MAX_NUM_REQ * sizeof(MeasurementRequest_t));
 
-TRACE0(pRequestHandler->hReport, REPORT_SEVERITY_INIT, ": RequestHandler configured successfully\n");
-
 	return TI_OK;
 }
 
@@ -166,8 +164,6 @@ RETURN:     TI_OK on success, TI_NOK otherwise
 TI_STATUS requestHandler_setParam(TI_HANDLE	hRequestHandler,
 								  paramInfo_t	*pParam)
 {
-	requestHandler_t *pRequestHandler = (requestHandler_t *)hRequestHandler;
-	
 	switch(pParam->paramType)
 	{
 /*	case RequestHandler_PARAM_TYPE:*/
@@ -175,7 +171,6 @@ TI_STATUS requestHandler_setParam(TI_HANDLE	hRequestHandler,
 	/*	break;*/
 		
 	default:
-TRACE1(pRequestHandler->hReport, REPORT_SEVERITY_ERROR, ": Set param, Params is not supported, %d\n\n", pParam->paramType);
 		return PARAM_NOT_SUPPORTED;
 	}
 
@@ -201,7 +196,6 @@ RETURN:     TI_OK on success, TI_NOK otherwise
 TI_STATUS requestHandler_getParam(TI_HANDLE		hRequestHandler,
 								  paramInfo_t	*pParam)
 {
-	requestHandler_t *pRequestHandler = (requestHandler_t *)hRequestHandler;
 /*	TI_STATUS			status;*/
 	
 	switch(pParam->paramType)
@@ -212,7 +206,6 @@ TI_STATUS requestHandler_getParam(TI_HANDLE		hRequestHandler,
 		/*return status;*/
 	
 	default:
-TRACE1(pRequestHandler->hReport, REPORT_SEVERITY_ERROR, ": Get param, Params is not supported, %d\n\n", pParam->paramType);
 		return PARAM_NOT_SUPPORTED;
 	}
 
@@ -284,8 +277,6 @@ TI_STATUS requestHandler_insertRequests(TI_HANDLE hRequestHandler,
 		    
 	if (requestsLen < 2)
     {
-        TRACE0(pRequestHandler->hReport, REPORT_SEVERITY_ERROR, ": Invalid length of the data.\n");
-
         return TI_NOK;
     }
 
@@ -308,8 +299,6 @@ TI_STATUS requestHandler_insertRequests(TI_HANDLE hRequestHandler,
 	}
 
 	pRequestHandler->activeRequestID = 0;
-	
-TRACE2(pRequestHandler->hReport, REPORT_SEVERITY_INFORMATION, ": Inserted into queue: activeRequestID = %d, numOfWaitingRequests = %d\n",					pRequestHandler->activeRequestID, pRequestHandler->numOfWaitingRequests);
 
 	return TI_OK;
 }
@@ -347,8 +336,6 @@ TI_STATUS requestHandler_getNextReq(TI_HANDLE hRequestHandler,
 	requestHandler_t	*pRequestHandler = (requestHandler_t *)hRequestHandler;
 	TI_UINT8				requestIndex = pRequestHandler->activeRequestID;
 	TI_UINT8				loopIndex = 0;
-	
-TRACE2(pRequestHandler->hReport, REPORT_SEVERITY_INFORMATION, ": Looking for requests. activeRequestID = %d, numOfWaitingRequests = %d\n",					pRequestHandler->activeRequestID, pRequestHandler->numOfWaitingRequests);
 
 	if(pRequestHandler->numOfWaitingRequests <= 0)
 		return TI_NOK;
@@ -363,13 +350,9 @@ TRACE2(pRequestHandler->hReport, REPORT_SEVERITY_INFORMATION, ": Looking for req
 
 	*numOfRequests = loopIndex;
 
-TRACE1(pRequestHandler->hReport, REPORT_SEVERITY_INFORMATION, ": Found %d requests to execute in parallel.\n", loopIndex);
-
 	if(isForActivation == TI_TRUE)
 	{
 		pRequestHandler->numOfWaitingRequests -= loopIndex;
-
-TRACE1(pRequestHandler->hReport, REPORT_SEVERITY_INFORMATION, ": Requests were queried for activation so decreasing numOfWaitingRequests to %d\n", pRequestHandler->numOfWaitingRequests);
 	}
 
 	return TI_OK;
@@ -432,8 +415,6 @@ TI_STATUS requestHandler_clearRequests(TI_HANDLE hRequestHandler)
 	/* Clearing the Request Array , mostly due to parallel bit */
 	os_memoryZero(pRequestHandler->hOs,pRequestHandler->reqArr,
 				  MAX_NUM_REQ * sizeof(MeasurementRequest_t));	
-	
-TRACE2(pRequestHandler->hReport, REPORT_SEVERITY_INFORMATION, ": Request queue has been cleared. activeRequestID = %d, numOfWaitingRequests = %d\n",					pRequestHandler->activeRequestID, pRequestHandler->numOfWaitingRequests);
 
 	return TI_OK;
 }

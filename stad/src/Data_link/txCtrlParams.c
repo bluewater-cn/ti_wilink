@@ -89,8 +89,6 @@ static void calcCreditFromTimer(TI_HANDLE hTxCtrl, TI_BOOL bTwdInitOccured)
 		/* check if this queue is under admission ctrl operation */
 		if(pTxCtrl->mediumTime[ac] == 0)
 		{
-TRACE1(pTxCtrl->hReport, REPORT_SEVERITY_INFORMATION, ": ac = %d mediumTime = 0 \n", ac);
-			
 			continue;
 		}
 
@@ -114,8 +112,6 @@ TRACE1(pTxCtrl->hReport, REPORT_SEVERITY_INFORMATION, ": ac = %d mediumTime = 0 
 		/* in case credit is bigger than mediumTime -> set credit to medium time */
 		if (pTxCtrl->credit[ac] > (TI_INT32)(pTxCtrl->mediumTime[ac]) )
 			pTxCtrl->credit[ac] = pTxCtrl->mediumTime[ac];
-
-       TRACE2(pTxCtrl->hReport, REPORT_SEVERITY_INFORMATION, "credit = %d  | TotalUsedTime = %d\n", pTxCtrl->credit[ac], pTxCtrl->totalUsedTime[ac]/1000);
 
 		/* Check medium-usage threshold cross events */
 		/*********************************************/
@@ -148,8 +144,6 @@ TRACE1(pTxCtrl->hReport, REPORT_SEVERITY_INFORMATION, ": ac = %d mediumTime = 0 
 
 			EvHandlerSendEvent(pTxCtrl->hEvHandler, IPC_EVENT_MEDIUM_TIME_CROSS, 
 				(TI_UINT8 *)&mediumTimeCross, sizeof(OS_802_11_THRESHOLD_CROSS_INDICATION_PARAMS));
-
-            TRACE3(pTxCtrl->hReport, REPORT_SEVERITY_INFORMATION, "crossed below low threshold !!! prevUsage = %d, currUsage = %d, lowCreditThreshold = %d\n",				prevUsage, currUsage, lowCreditThreshold);
 		}
 		
 		/* crossing above the high threshold */
@@ -162,8 +156,6 @@ TRACE1(pTxCtrl->hReport, REPORT_SEVERITY_INFORMATION, ": ac = %d mediumTime = 0 
 
 			EvHandlerSendEvent(pTxCtrl->hEvHandler, IPC_EVENT_MEDIUM_TIME_CROSS, 
 				(TI_UINT8 *)&mediumTimeCross, sizeof(OS_802_11_THRESHOLD_CROSS_INDICATION_PARAMS));
-
-            TRACE3(pTxCtrl->hReport, REPORT_SEVERITY_INFORMATION, "crossed above high threshold !!! prevUsage = %d, currUsage = %d, highCreditThreshold = %d\n",				prevUsage, currUsage, highCreditThreshold);
 		}
 
 		/* reset totalUsedTime */
@@ -375,7 +367,6 @@ TI_STATUS txCtrlParams_getParam(TI_HANDLE hTxCtrl, paramInfo_t *pParamInfo)
 
 
     default:
-        TRACE0(pTxCtrl->hReport, REPORT_SEVERITY_ERROR, ": PARAMETER NOT SUPPORTED\n");
         return PARAM_NOT_SUPPORTED;
         break;
     }
@@ -415,7 +406,6 @@ TI_STATUS txCtrlParams_setParam(TI_HANDLE hTxCtrl, paramInfo_t *pParamInfo)
 				pParamInfo->content.txDataMediumUsageThreshold.uLowThreshold;
 		}
 		else
-TRACE1(pTxCtrl->hReport, REPORT_SEVERITY_ERROR, ": Wrong AC (AC=%d > 3)\n", acID);
 		break;
 
     case TX_CTRL_GET_MEDIUM_USAGE_THRESHOLD:
@@ -427,7 +417,6 @@ TRACE1(pTxCtrl->hReport, REPORT_SEVERITY_ERROR, ": Wrong AC (AC=%d > 3)\n", acID
 		break;
 
     case TX_CTRL_POLL_AP_PACKETS_FROM_AC:
-       TRACE0(pTxCtrl->hReport, REPORT_SEVERITY_ERROR, ": Poll-AP is not supported in this version!!\n");
        return PARAM_NOT_SUPPORTED;
 
 	case TX_CTRL_RESET_COUNTERS_PARAM:
@@ -446,7 +435,6 @@ TRACE1(pTxCtrl->hReport, REPORT_SEVERITY_ERROR, ": Wrong AC (AC=%d > 3)\n", acID
 
 
     default:
-        TRACE0(pTxCtrl->hReport, REPORT_SEVERITY_ERROR, ": PARAMETER NOT SUPPORTED\n");
         return PARAM_NOT_SUPPORTED;
     }
 
@@ -686,48 +674,6 @@ DESCRIPTION:    Print module internal information.
 ************************************************************************/
 void txCtrlParams_printInfo(TI_HANDLE hTxCtrl)
 {
-	txCtrl_t *pTxCtrl = (txCtrl_t *)hTxCtrl;
-
-    WLAN_OS_REPORT(("-------------- Tx-Ctrl Module Information --------------\n"));
-    WLAN_OS_REPORT(("========================================================\n"));
-
-    WLAN_OS_REPORT(("ACs Mapping:\n"));
-    WLAN_OS_REPORT(("------------\n"));
-    WLAN_OS_REPORT(("admissionRequired[3,2,1,0]   =  %d,   %d,   %d,   %d\n", 
-		pTxCtrl->admissionRequired[3], pTxCtrl->admissionRequired[2],
-		pTxCtrl->admissionRequired[1], pTxCtrl->admissionRequired[0]));
-    WLAN_OS_REPORT(("admissionState[3,2,1,0]      =  %d,   %d,   %d,   %d\n", 
-		pTxCtrl->admissionState[3], pTxCtrl->admissionState[2],
-		pTxCtrl->admissionState[1], pTxCtrl->admissionState[0]));
-    WLAN_OS_REPORT(("highestAdmittedAc[3,2,1,0]   =  %d,   %d,   %d,   %d\n", 
-		pTxCtrl->highestAdmittedAc[3], pTxCtrl->highestAdmittedAc[2],
-		pTxCtrl->highestAdmittedAc[1], pTxCtrl->highestAdmittedAc[0]));
-    WLAN_OS_REPORT(("admittedAcToTidMap[3,2,1,0]  =  0x%x, 0x%x, 0x%x, 0x%x\n", 
-		pTxCtrl->admittedAcToTidMap[3], pTxCtrl->admittedAcToTidMap[2],
-		pTxCtrl->admittedAcToTidMap[1], pTxCtrl->admittedAcToTidMap[0]));
-    WLAN_OS_REPORT(("busyAcBitmap                 = 0x%x\n", pTxCtrl->busyAcBitmap));
-    WLAN_OS_REPORT(("busyTidBitmap                = 0x%x\n", pTxCtrl->busyTidBitmap));
-    WLAN_OS_REPORT(("--------------------------------------------------------\n"));
-
-    WLAN_OS_REPORT(("Tx Attributes:\n"));
-    WLAN_OS_REPORT(("--------------\n"));
-    WLAN_OS_REPORT(("mgmtRatePolicy[3,2,1,0]      =  %d,   %d,   %d,   %d\n", 
-		pTxCtrl->mgmtRatePolicy[3], pTxCtrl->mgmtRatePolicy[2],
-		pTxCtrl->mgmtRatePolicy[1], pTxCtrl->mgmtRatePolicy[0]));
-    WLAN_OS_REPORT(("dataRatePolicy[3,2,1,0]      =  %d,   %d,   %d,   %d\n", 
-		pTxCtrl->dataRatePolicy[3], pTxCtrl->dataRatePolicy[2],
-		pTxCtrl->dataRatePolicy[1], pTxCtrl->dataRatePolicy[0]));
-    WLAN_OS_REPORT(("dataPktDescAttrib            = 0x%x\n", pTxCtrl->dataPktDescAttrib));
-    WLAN_OS_REPORT(("--------------------------------------------------------\n"));
-
-    WLAN_OS_REPORT(("Parameters:\n"));
-    WLAN_OS_REPORT(("----------\n"));
-    WLAN_OS_REPORT(("headerConverMode             = %d\n", pTxCtrl->headerConverMode));
-    WLAN_OS_REPORT(("currentPrivacyInvokedMode    = %d\n", pTxCtrl->currentPrivacyInvokedMode));
-    WLAN_OS_REPORT(("eapolEncryptionStatus        = %d\n", pTxCtrl->eapolEncryptionStatus));
-    WLAN_OS_REPORT(("encryptionFieldSize          = %d\n", pTxCtrl->encryptionFieldSize));
-    WLAN_OS_REPORT(("currBssType                  = %d\n", pTxCtrl->currBssType));
-    WLAN_OS_REPORT(("========================================================\n\n"));
 }
 
 
@@ -738,62 +684,6 @@ DESCRIPTION:    Print Tx statistics debug counters.
 ************************************************************************/
 void txCtrlParams_printDebugCounters(TI_HANDLE hTxCtrl)
 {
-	txCtrl_t *pTxCtrl = (txCtrl_t *)hTxCtrl;
-    TI_UINT32 ac;
-
-    WLAN_OS_REPORT(("-------------- Tx-Ctrl Statistics Per AC ---------------\n"));
-    WLAN_OS_REPORT(("========================================================\n"));
-
-    WLAN_OS_REPORT(("---------- Packets Sent To Tx-Ctrl ---------------------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumPktsSent[ac]));
-
-    WLAN_OS_REPORT(("---------- Number of Queue-Stop (BP) -------------------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumPktsBackpressure[ac]));
-
-    WLAN_OS_REPORT(("---------- Number of AC Busy (Requeue pkt) -------------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumPktsBusy[ac]));
-
-    WLAN_OS_REPORT(("---------- Packets Sent to Xfer ------------------------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumPktsXfered[ac]));
-
-    WLAN_OS_REPORT(("----------- Xfer rc = Success --------------------------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumPktsSuccess[ac]));
-
-    WLAN_OS_REPORT(("----------- Xfer rc = Pending --------------------------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumPktsPending[ac]));
-
-    WLAN_OS_REPORT(("----------- Xfer rc = Error ----------------------------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumPktsError[ac]));
-
-    WLAN_OS_REPORT(("----------- Number of Tx-Complete Packets --------------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumTxCmplt[ac]));
-
-    WLAN_OS_REPORT(("----------- Number of Tx-Complete Packets TI_OK -----------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumTxCmpltOk[ac]));
-
-    WLAN_OS_REPORT(("----------- Number of Tx-Complete Packets Fails --------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumTxCmpltError[ac]));
-
-    WLAN_OS_REPORT(("----------- Number of Tx-Complete Bytes TI_OK -------------\n"));
-    for(ac = 0; ac < MAX_NUM_OF_AC; ac++)
-        WLAN_OS_REPORT(("AC %d = %d\n", ac, pTxCtrl->dbgCounters.dbgNumTxCmpltOkBytes[ac]));
-    WLAN_OS_REPORT(("--------------------------------------------------------\n"));
-
-    WLAN_OS_REPORT(("Total Number of Xfer-Complete Events = %d\n", pTxCtrl->dbgCounters.dbgNumXferCmplt));
-    WLAN_OS_REPORT(("Total Number of Xfer-Pending  Events = %d\n", 
-		pTxCtrl->dbgCounters.dbgNumPktsPending[0] +	pTxCtrl->dbgCounters.dbgNumPktsPending[1] +
-		pTxCtrl->dbgCounters.dbgNumPktsPending[2] +	pTxCtrl->dbgCounters.dbgNumPktsPending[3]));
-    WLAN_OS_REPORT(("========================================================\n\n"));
 }
 
 

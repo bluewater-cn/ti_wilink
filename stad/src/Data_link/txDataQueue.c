@@ -52,7 +52,6 @@
 #include "txDataQueue.h"
 #include "txCtrl.h"
 #include "DrvMainModules.h"
-#include "bmtrace_api.h"
 
 
 /* Internal Functions prototypes */
@@ -89,7 +88,6 @@ TI_HANDLE txDataQ_Create(TI_HANDLE hOs)
 	
     if (!pTxDataQ)
 	{
-        WLAN_OS_REPORT(("Error allocating the TxDataQueue Module\n"));
 		return NULL;
 	}
 
@@ -151,8 +149,6 @@ void txDataQ_Init (TStadHandlesList *pStadHandles)
 		/* If any Queues' allocation failed, print error, free TxDataQueue module and exit */
 		if (pTxDataQ->aQueues[uQueId] == NULL)
 		{
-            TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_CONSOLE , "Failed to create queue\n");
-			WLAN_OS_REPORT(("Failed to create queue\n"));
 			os_memoryFree (pTxDataQ->hOs, pTxDataQ, sizeof(TTxDataQ));
 			return;
 		}
@@ -166,7 +162,6 @@ void txDataQ_Init (TStadHandlesList *pStadHandles)
     pTxDataQ->hTxSendPaceTimer = tmr_CreateTimer (pStadHandles->hTimer);
 	if (pTxDataQ->hTxSendPaceTimer == NULL)
 	{
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "txDataQ_Init(): Failed to create hTxSendPaceTimer!\n");
 		return;
 	}
     
@@ -203,8 +198,6 @@ TI_STATUS txDataQ_SetDefaults (TI_HANDLE  hTxDataQ, txDataInitParams_t *pTxDataI
     eStatus = txDataClsfr_Config (hTxDataQ, &pTxDataInitParams->ClsfrInitParam);
     if (eStatus != TI_OK)
     {  
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_CONSOLE ,"FATAL ERROR: txDataQ_SetDefaults(): txDataClsfr_Config failed - Aborting\n");
-        WLAN_OS_REPORT(("FATAL ERROR: txDataQ_SetDefaults(): txDataClsfr_Config failed - Aborting\n"));
         return eStatus;
     }
 
@@ -215,7 +208,6 @@ TI_STATUS txDataQ_SetDefaults (TI_HANDLE  hTxDataQ, txDataInitParams_t *pTxDataI
 	pTxDataQ->aTxSendPaceThresh[QOS_AC_VI] = pTxDataInitParams->uTxSendPaceThresh;
 	pTxDataQ->aTxSendPaceThresh[QOS_AC_VO] = 1;     /* Don't delay voice packts! */
     
-    TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_INIT, ".....Tx Data Queue configured successfully\n");
 	
     return TI_OK;
 }
@@ -246,7 +238,6 @@ TI_STATUS txDataQ_Destroy (TI_HANDLE hTxDataQ)
     {
         if (que_Destroy(pTxDataQ->aQueues[uQueId]) != TI_OK)
 		{
-            TRACE1(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "txDataQueue_unLoad: fail to free Data Queue number: %d\n",uQueId);
 			status = TI_NOK;
 		}
     }
@@ -327,7 +318,6 @@ TI_STATUS txDataQ_InsertPacket (TI_HANDLE hTxDataQ, TTxCtrlBlk *pPktCtrlBlk, TI_
     txCtrl_t         *pTxCtrl = (txCtrl_t *)(pTxDataQ->hTxCtrl);
     TI_BOOL          bRequestSchedule = TI_FALSE;
     TI_BOOL          bStopNetStack = TI_FALSE;
-	CL_TRACE_START_L3();
 
     /* If packet is EAPOL or from the generic Ethertype, forward it to the Mgmt-Queue and exit */
     if ((HTOWLANS(pEthHead->type) == ETHERTYPE_EAPOL) ||
@@ -349,7 +339,6 @@ TI_STATUS txDataQ_InsertPacket (TI_HANDLE hTxDataQ, TTxCtrlBlk *pPktCtrlBlk, TI_
 	{
 #ifdef TI_DBG
 		pTxDataQ->uClsfrMismatchCount++;
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_WARNING, "txDataQueue_xmit: No matching classifier found \n");
 #endif /* TI_DBG */
 	}
 
@@ -420,8 +409,6 @@ TI_STATUS txDataQ_InsertPacket (TI_HANDLE hTxDataQ, TTxCtrlBlk *pPktCtrlBlk, TI_
 		pTxDataQ->aQueueCounters[uQueId].uEnqueuePacket++;
 #endif /* TI_DBG */
     }
-
-    CL_TRACE_END_L3 ("tiwlan_drv.ko", "INHERIT", "TX", "");
 
     return eStatus;
 }
@@ -542,40 +529,11 @@ void txDataQ_PrintModuleParams (TI_HANDLE hTxDataQ)
 {
 	TTxDataQ *pTxDataQ = (TTxDataQ *)hTxDataQ;
 	TI_UINT32      qIndex;
-	
-	WLAN_OS_REPORT(("--------- txDataQueue_printModuleParams ----------\n\n"));
-	
-	WLAN_OS_REPORT(("bStopNetStackTx = %d\n",pTxDataQ->bStopNetStackTx));
-	WLAN_OS_REPORT(("bDataPortEnable = %d\n",pTxDataQ->bDataPortEnable));
-	WLAN_OS_REPORT(("uNumQueues      = %d\n",pTxDataQ->uNumQueues));
-	WLAN_OS_REPORT(("uLastQueId      = %d\n",pTxDataQ->uLastQueId));
-	WLAN_OS_REPORT(("uContextId      = %d\n",pTxDataQ->uContextId));
 
-	for (qIndex = 0; qIndex < pTxDataQ->uNumQueues; qIndex++)
-    {
-		WLAN_OS_REPORT(("aQueueBusy[%d]            = %d\n", qIndex, pTxDataQ->aQueueBusy[qIndex]));
-    }
-	for (qIndex = 0; qIndex < pTxDataQ->uNumQueues; qIndex++)
-    {
-        WLAN_OS_REPORT(("aQueueMaxSize[%d]         = %d\n", qIndex, pTxDataQ->aQueueMaxSize[qIndex]));
-    }
-	for (qIndex = 0; qIndex < pTxDataQ->uNumQueues; qIndex++)
-    {
-        WLAN_OS_REPORT(("aTxSendPaceThresh[%d]     = %d\n", qIndex, pTxDataQ->aTxSendPaceThresh[qIndex]));
-    }
-	for (qIndex = 0; qIndex < pTxDataQ->uNumQueues; qIndex++)
-    {
-        WLAN_OS_REPORT(("aNetStackQueueStopped[%d] = %d\n", qIndex, pTxDataQ->aNetStackQueueStopped[qIndex]));
-    }
-
-	WLAN_OS_REPORT(("-------------- Queues Info -----------------------\n"));
 	for (qIndex = 0; qIndex < MAX_NUM_OF_AC; qIndex++)
     {
-        WLAN_OS_REPORT(("Que %d:\n", qIndex));
         que_Print (pTxDataQ->aQueues[qIndex]);
     }
-
-	WLAN_OS_REPORT(("--------------------------------------------------\n\n"));
 }
 
 
@@ -592,35 +550,6 @@ void txDataQ_PrintModuleParams (TI_HANDLE hTxDataQ)
  */ 
 void txDataQ_PrintQueueStatistics (TI_HANDLE hTxDataQ)
 {
-	TTxDataQ *pTxDataQ = (TTxDataQ *)hTxDataQ;
-	TI_UINT32      qIndex;
-
-	WLAN_OS_REPORT(("-------------- txDataQueue_printStatistics -------\n\n"));
-
-	WLAN_OS_REPORT(("uClsfrMismatchCount      = %d\n",pTxDataQ->uClsfrMismatchCount));
-    WLAN_OS_REPORT(("uTxSendPaceTimeoutsCount = %d\n",pTxDataQ->uTxSendPaceTimeoutsCount));
-	
-	WLAN_OS_REPORT(("-------------- Enqueue to queues -----------------\n"));
-    for(qIndex = 0; qIndex < MAX_NUM_OF_AC; qIndex++)
-        WLAN_OS_REPORT(("Que[%d]: = %d\n",qIndex, pTxDataQ->aQueueCounters[qIndex].uEnqueuePacket));
-	
-	WLAN_OS_REPORT(("-------------- Dequeue from queues ---------------\n"));
-    for(qIndex = 0; qIndex < MAX_NUM_OF_AC; qIndex++)
-        WLAN_OS_REPORT(("Que[%d]: = %d\n",qIndex, pTxDataQ->aQueueCounters[qIndex].uDequeuePacket));
-
-	WLAN_OS_REPORT(("-------------- Requeue to queues -----------------\n"));
-    for(qIndex = 0; qIndex < MAX_NUM_OF_AC; qIndex++)
-        WLAN_OS_REPORT(("Que[%d]: = %d\n",qIndex, pTxDataQ->aQueueCounters[qIndex].uRequeuePacket));
-
-	WLAN_OS_REPORT(("-------------- Sent to TxCtrl --------------------\n"));
-    for(qIndex = 0; qIndex < MAX_NUM_OF_AC; qIndex++)
-        WLAN_OS_REPORT(("Que[%d]: = %d\n",qIndex, pTxDataQ->aQueueCounters[qIndex].uXmittedPacket));
-
-	WLAN_OS_REPORT(("-------------- Dropped - Queue Full --------------\n"));
-    for(qIndex = 0; qIndex < MAX_NUM_OF_AC; qIndex++)
-        WLAN_OS_REPORT(("Que[%d]: = %d\n",qIndex, pTxDataQ->aQueueCounters[qIndex].uDroppedPacket));
-
-	WLAN_OS_REPORT(("--------------------------------------------------\n\n"));
 }
 
 

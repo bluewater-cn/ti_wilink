@@ -91,10 +91,6 @@ void healthMonitorDebugFunction (TStadHandlesList *pStadHandles, TI_UINT32 funcT
             /* perform the recovery directly */
             noScanCompleteTimer (hTWD);
         }
-        else /* scan Srv is probably entering/exiting PowerSave. We won't handle this case since it happens rarely */
-        {
-            WLAN_OS_REPORT(("Scan isn't running at the moment, so try again (make sure it is enabled)\n"));
-        }
         break;
         
     case DBG_HM_RECOVERY_MBOX_FAILURE:  
@@ -139,7 +135,6 @@ void healthMonitorDebugFunction (TStadHandlesList *pStadHandles, TI_UINT32 funcT
         break;
 
     default:
-        WLAN_OS_REPORT(("Invalid function type in health monitor debug function: %d\n", funcType));
         break;
     }
 }
@@ -154,20 +149,6 @@ void healthMonitorDebugFunction (TStadHandlesList *pStadHandles, TI_UINT32 funcT
  */
 void printHealthMonitorDbgFunctions(void)
 {
-    WLAN_OS_REPORT(("   HealthMonitor Debug Functions       \n"));
-    WLAN_OS_REPORT(("---------------------------------------\n"));
-    WLAN_OS_REPORT(("2000 - Print HealthMonitor Debug Help  \n"));
-    WLAN_OS_REPORT(("2001 - Trigger NO_SCAN_COMPLETE        \n"));
-    WLAN_OS_REPORT(("2002 - Trigger MBOX_FAILURE            \n"));
-    WLAN_OS_REPORT(("2003 - Trigger HW_AWAKE_FAILURE        \n"));
-    WLAN_OS_REPORT(("2004 - Trigger TX_STUCK                \n"));
-    WLAN_OS_REPORT(("2005 - Trigger DISCONNECT_TIMEOUT      \n"));
-    WLAN_OS_REPORT(("2006 - Trigger POWER_SAVE_FAILURE      \n"));
-    WLAN_OS_REPORT(("2007 - Trigger MEASUREMENT_FAILURE     \n"));
-    WLAN_OS_REPORT(("2008 - Trigger BUS_FAILURE             \n"));
-    WLAN_OS_REPORT(("2009 - Start RECOVERY_FROM_CLI         \n"));
-    WLAN_OS_REPORT(("2010 - Trigger HW_WD_EXPIRE            \n"));
-    WLAN_OS_REPORT(("2011 - Trigger RX_XFER_FAILURE         \n"));
 }
 
 static void noScanCompleteTimer (TI_HANDLE hTWD)

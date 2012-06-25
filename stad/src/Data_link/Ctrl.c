@@ -93,7 +93,6 @@ TI_HANDLE ctrlData_create(TI_HANDLE hOs)
 
     if( hOs  == NULL )
     {
-        WLAN_OS_REPORT(("FATAL ERROR: ctrlData_create(): OS handle Error - Aborting\n"));
         return NULL;
     }
 
@@ -150,8 +149,6 @@ void ctrlData_init (TStadHandlesList *pStadHandles,
 	pCtrlData->retriesUpdateCBFunc = retriesUpdateCBFunc;
 	pCtrlData->retriesUpdateCBObj  = retriesUpdateCBObj;
 #endif
-    
-    TRACE0(pCtrlData->hReport, REPORT_SEVERITY_INIT, ".....Ctrl Data configured successfully ...\n");
 }
 
 
@@ -190,8 +187,6 @@ TI_STATUS ctrlData_SetDefaults (TI_HANDLE hCtrlData, ctrlDataInitParams_t *ctrlD
     pCtrlData->ctrlDataTrafficIntensityThresholds.uHighThreshold = ctrlDataInitParams->ctrlDataTrafficThreshold.uHighThreshold;
     pCtrlData->ctrlDataTrafficIntensityThresholds.uLowThreshold = ctrlDataInitParams->ctrlDataTrafficThreshold.uLowThreshold;
     pCtrlData->ctrlDataTrafficIntensityThresholds.TestInterval = ctrlDataInitParams->ctrlDataTrafficThreshold.TestInterval;
-
-    TRACE4(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, "\nTraffic Intensity parameters:\nEvents enabled = %d\nuHighThreshold = %d\nuLowThreshold = %d\nTestInterval = %d\n\n", pCtrlData->ctrlDataTrafficIntensityEventsEnabled, pCtrlData->ctrlDataTrafficIntensityThresholds.uHighThreshold, pCtrlData->ctrlDataTrafficIntensityThresholds.uLowThreshold, pCtrlData->ctrlDataTrafficIntensityThresholds.TestInterval);
 
     /* Register the traffic intensity events with the traffic monitor */
     ctrlData_RegisterTrafficIntensityEvents (pCtrlData);
@@ -294,8 +289,6 @@ TI_STATUS ctrlData_getParamBssid(TI_HANDLE hCtrlData, EInternalParam paramVal, T
 TI_STATUS ctrlData_getParam(TI_HANDLE hCtrlData, paramInfo_t *pParamInfo)   
 {
     ctrlData_t *pCtrlData = (ctrlData_t *)hCtrlData;
-    
-    TRACE1(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, "ctrlData_getParam() : param=0x%x \n", pParamInfo->paramType);
 
     switch (pParamInfo->paramType)
     {
@@ -342,7 +335,6 @@ TI_STATUS ctrlData_getParam(TI_HANDLE hCtrlData, paramInfo_t *pParamInfo)
         break;
 
     default:
-        TRACE0(pCtrlData->hReport, REPORT_SEVERITY_ERROR, " ctrlData_getParam() : PARAMETER NOT SUPPORTED \n");
 		return (PARAM_NOT_SUPPORTED);
     }
 
@@ -424,8 +416,6 @@ static void ctrlData_setTxRatePolicies(ctrlData_t *pCtrlData)
         uEnabledHwRatesMask = ctrlData_buildSupportedHwRates (uSupportedRateMask, uPolicyRateMask);   
         pCtrlData->ctrlDataTxRatePolicy.rateClass[fwPolicyID].txEnabledRates = uEnabledHwRatesMask;
 
-        TRACE2(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, "ctrlData_setTxRatePolicies: AC %d, rate-policy 0x%x", ac, uEnabledHwRatesMask);
-
         /* Note that Long/Short retries are pre-set during configuration stage */
 
         /* 3. Finally, increase total number of policies */
@@ -448,7 +438,6 @@ static void ctrlData_setTxRatePolicies(ctrlData_t *pCtrlData)
     fwPolicyID++;
 
     /* Download policies to the FW. Num of policies is 8 - one for each AC for every class */
-    TRACE1(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, "ctrlData_setTxRatePolicies: num of Rate policies: %d\n", fwPolicyID);
 
     pCtrlData->ctrlDataTxRatePolicy.numOfRateClasses = fwPolicyID;
     param.paramType = TWD_TX_RATE_CLASS_PARAM_ID;
@@ -477,8 +466,6 @@ TI_STATUS ctrlData_setParam(TI_HANDLE hCtrlData, paramInfo_t *pParamInfo)
 {
     ctrlData_t *pCtrlData = (ctrlData_t *)hCtrlData;
     TTwdParamInfo param;
-
-    TRACE1(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, "ctrlData_setParam() : param=0x%x \n", pParamInfo->paramType);
 
     switch (pParamInfo->paramType)
     {
@@ -634,7 +621,6 @@ TI_STATUS ctrlData_setParam(TI_HANDLE hCtrlData, paramInfo_t *pParamInfo)
         break;
 
     default:
-TRACE0(pCtrlData->hReport, REPORT_SEVERITY_ERROR, " ctrlData_setParam() : PARAMETER NOT SUPPORTED \n");
         return (PARAM_NOT_SUPPORTED);
     }
 
@@ -694,7 +680,6 @@ static void selectRateTable(TI_HANDLE hCtrlData, TI_UINT32 rateMask)
         case DOT11_DUAL_MODE:
         case DOT11_MAX_MODE:
         case DOT11_N_MODE:
-            TRACE0(pCtrlData->hReport, REPORT_SEVERITY_ERROR, " uCurrPolicyEnabledRatesMask not configured !!!");
             break;
     }
 
@@ -740,8 +725,6 @@ TI_STATUS ctrlData_stop(TI_HANDLE hCtrlData)
     os_memoryZero(pCtrlData->hOs, 
                   &pCtrlData->tsrsParameters, 
                   sizeof(pCtrlData->tsrsParameters));
-
-    TRACE0(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, " ctrlData_stop() : Link control algorithms stoped \n");
 
     return TI_OK;
 }
@@ -809,7 +792,6 @@ void ctrlData_ToggleTrafficIntensityNotification (TI_HANDLE hCtrlData, TI_BOOL e
       {
          TrafficMonitor_StartEventNotif (pCtrlData->hTrafficMonitor,pCtrlData->ctrlDataTrafficThresholdEvents[idx]);
       }
-      TRACE0(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, "ctrlData_ToggleTrafficIntensityNotification (TI_TRUE)\n");
    }
    else
    {
@@ -817,7 +799,6 @@ void ctrlData_ToggleTrafficIntensityNotification (TI_HANDLE hCtrlData, TI_BOOL e
       {
          TrafficMonitor_StopEventNotif (pCtrlData->hTrafficMonitor,pCtrlData->ctrlDataTrafficThresholdEvents[idx]);
       }
-      TRACE0(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, "ctrlData_ToggleTrafficIntensityNotification (TI_FALSE)\n");
    }
    pCtrlData->ctrlDataTrafficIntensityEventsEnabled = enabledFlag;
 
@@ -839,8 +820,6 @@ static void ctrlData_UnregisterTrafficIntensityEvents (TI_HANDLE hCtrlData)
     {
        TrafficMonitor_UnregEvent (pCtrlData->hTrafficMonitor,pCtrlData->ctrlDataTrafficThresholdEvents[idx]);
     }
-
-    TRACE0(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, "ctrlData_UnregisterTrafficIntensityEvents: Unregistered all events\n");
 
 }
 
@@ -870,7 +849,6 @@ static void ctrlData_RegisterTrafficIntensityEvents (TI_HANDLE hCtrlData)
 
     if (pCtrlData->ctrlDataTrafficThresholdEvents[0] == NULL)
     {
-         TRACE0(pCtrlData->hReport, REPORT_SEVERITY_ERROR, " ctrlData_RegisterTrafficIntensityEvents() : Failed to register high treshold event (TRAFF_UP) \n");
          return;
     }
 
@@ -883,7 +861,6 @@ static void ctrlData_RegisterTrafficIntensityEvents (TI_HANDLE hCtrlData)
 
     if (pCtrlData->ctrlDataTrafficThresholdEvents[1] == NULL)
     {
-         TRACE0(pCtrlData->hReport, REPORT_SEVERITY_ERROR, " ctrlData_RegisterTrafficIntensityEvents() : Failed to register high treshold event (TRAFF_DOWN) \n");
          return;
     }
 
@@ -892,11 +869,6 @@ static void ctrlData_RegisterTrafficIntensityEvents (TI_HANDLE hCtrlData)
                                             pCtrlData->ctrlDataTrafficThresholdEvents[0],
                                             pCtrlData->ctrlDataTrafficThresholdEvents[1],
                                             TI_TRUE);
-
-    if (status != TI_OK)
-    {
-      TRACE1(pCtrlData->hReport, REPORT_SEVERITY_ERROR , "ctrlData_RegisterTrafficIntensityEvents: TrafficMonitor_SetRstCondition returned status = %d\n",status);
-    }
 
     /* Register low threshold "direction up" event */
     TrafficAlertRegParm.Cookie =  CTRL_DATA_TRAFFIC_INTENSITY_LOW_CROSSED_ABOVE;    
@@ -907,7 +879,6 @@ static void ctrlData_RegisterTrafficIntensityEvents (TI_HANDLE hCtrlData)
 
     if (pCtrlData->ctrlDataTrafficThresholdEvents[2] == NULL)
     {
-         TRACE0(pCtrlData->hReport, REPORT_SEVERITY_ERROR, " ctrlData_RegisterTrafficIntensityEvents() : Failed to register low treshold event (TRAFF_UP) \n");
          return;
     }
 
@@ -920,7 +891,6 @@ static void ctrlData_RegisterTrafficIntensityEvents (TI_HANDLE hCtrlData)
 
     if (pCtrlData->ctrlDataTrafficThresholdEvents[3] == NULL)
     {
-         TRACE0(pCtrlData->hReport, REPORT_SEVERITY_ERROR, " ctrlData_RegisterTrafficIntensityEvents() : Failed to register low treshold event (TRAFF_DOWN) \n");
          return;
     }
 
@@ -929,13 +899,6 @@ static void ctrlData_RegisterTrafficIntensityEvents (TI_HANDLE hCtrlData)
                                             pCtrlData->ctrlDataTrafficThresholdEvents[2],
                                             pCtrlData->ctrlDataTrafficThresholdEvents[3],
                                             TI_TRUE);
-
-    if (status != TI_OK)
-    {
-      TRACE1(pCtrlData->hReport, REPORT_SEVERITY_ERROR , "ctrlData_RegisterTrafficIntensityEvents: TrafficMonitor_SetRstCondition returned status = %d\n",status);
-    }
-  
-    TRACE0(pCtrlData->hReport, REPORT_SEVERITY_INFORMATION, " ctrlData_RegisterTrafficIntensityEvents() : finished registering all events \n");
 
 }
 
@@ -978,7 +941,6 @@ static void ctrlData_TrafficThresholdCrossed(TI_HANDLE Context,TI_UINT32 Cookie)
             EvHandlerSendEvent(pCtrlData->hEvHandler, IPC_EVENT_TRAFFIC_INTENSITY_THRESHOLD_CROSSED, (TI_UINT8 *)&crossInfo,sizeof(trafficIntensityThresholdCross_t));
        break;
     default:
-         TRACE0(pCtrlData->hReport, REPORT_SEVERITY_ERROR, " ctrlData_TrafficThresholdCrossed() : Unknown cookie received from traffic monitor !!! \n");
        break;
    }
     
@@ -994,60 +956,11 @@ static void ctrlData_TrafficThresholdCrossed(TI_HANDLE Context,TI_UINT32 Cookie)
 
 void ctrlData_printTxParameters(TI_HANDLE hCtrlData)
 {
-	ctrlData_t *pCtrlData = (ctrlData_t *)hCtrlData;
-
-    WLAN_OS_REPORT(("            Tx Parameters            \n"));
-    WLAN_OS_REPORT(("-------------------------------------\n"));
-    WLAN_OS_REPORT(("currentPreamble                     = %d\n\n",pCtrlData->ctrlDataCurrentPreambleType));
-    WLAN_OS_REPORT(("ctrlDataCurrentRateMask             = 0x%X\n",pCtrlData->ctrlDataCurrentRateMask));
 }  
 
 
 void ctrlData_printCtrlBlock(TI_HANDLE hCtrlData)
 {
-    ctrlData_t *pCtrlData = (ctrlData_t *)hCtrlData;
-    TI_UINT32  i;
-
-    WLAN_OS_REPORT(("    CtrlData BLock    \n"));
-    WLAN_OS_REPORT(("----------------------\n"));
-
-    WLAN_OS_REPORT(("hSiteMgr = 0x%X\n",pCtrlData->hSiteMgr));
-    WLAN_OS_REPORT(("hTWD = 0x%X\n",pCtrlData->hTWD));
-    WLAN_OS_REPORT(("hOs = 0x%X\n",pCtrlData->hOs));
-    WLAN_OS_REPORT(("hReport = 0x%X\n",pCtrlData->hReport));
-
-    WLAN_OS_REPORT(("ctrlDataDeviceMacAddress = 0x%X.0x%X.0x%X.0x%X.0x%X.0x%X. \n", pCtrlData->ctrlDataDeviceMacAddress[0],
-                                                                                    pCtrlData->ctrlDataDeviceMacAddress[1],
-                                                                                    pCtrlData->ctrlDataDeviceMacAddress[2],
-                                                                                    pCtrlData->ctrlDataDeviceMacAddress[3],
-                                                                                    pCtrlData->ctrlDataDeviceMacAddress[4],
-                                                                                    pCtrlData->ctrlDataDeviceMacAddress[5]));
-
-    WLAN_OS_REPORT(("ctrlDataCurrentBSSID = 0x%X.0x%X.0x%X.0x%X.0x%X.0x%X. \n", pCtrlData->ctrlDataCurrentBSSID[0],
-                                                                                pCtrlData->ctrlDataCurrentBSSID[1],
-                                                                                pCtrlData->ctrlDataCurrentBSSID[2],
-                                                                                pCtrlData->ctrlDataCurrentBSSID[3],
-                                                                                pCtrlData->ctrlDataCurrentBSSID[4],
-                                                                                pCtrlData->ctrlDataCurrentBSSID[5]));
-
-    WLAN_OS_REPORT(("ctrlDataCurrentBssType      = %d\n", pCtrlData->ctrlDataCurrentBssType));
-    WLAN_OS_REPORT(("ctrlDataCurrentRateMask     = 0x%X\n", pCtrlData->ctrlDataCurrentRateMask));
-    WLAN_OS_REPORT(("ctrlDataCurrentPreambleType = %d\n", pCtrlData->ctrlDataCurrentPreambleType));
-
-    WLAN_OS_REPORT(("Traffic Intensity threshold events status: %s\n", (pCtrlData->ctrlDataTrafficIntensityEventsEnabled ? "Enabled" : "Disabled")));
-    WLAN_OS_REPORT(("Traffic Intensity high threshold: %d packets/sec \n", pCtrlData->ctrlDataTrafficIntensityThresholds.uHighThreshold));
-    WLAN_OS_REPORT(("Traffic Intensity low threshold: %d packets/sec \n", pCtrlData->ctrlDataTrafficIntensityThresholds.uLowThreshold));
-    WLAN_OS_REPORT(("Traffic Intensity test interval: %d ms\n", pCtrlData->ctrlDataTrafficIntensityThresholds.TestInterval));
-
-    for (i=0; i < pCtrlData->ctrlDataTxRatePolicy.numOfRateClasses; i++) 
-    {
-        WLAN_OS_REPORT(("Rate Enable/Disable Mask = 0x%x\n",
-						pCtrlData->ctrlDataTxRatePolicy.rateClass[i].txEnabledRates));   
-
-        WLAN_OS_REPORT(("Long retry = %d, Short retry = %d\n",
-						pCtrlData->ctrlDataTxRatePolicy.rateClass[i].longRetryLimit,
-						pCtrlData->ctrlDataTxRatePolicy.rateClass[i].shortRetryLimit));
-    }
 }
 
 

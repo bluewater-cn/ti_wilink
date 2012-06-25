@@ -296,10 +296,6 @@ TI_STATUS admCtrl_config (TI_HANDLE hAdmCtrl,
 
     /* Create hPreAuthTimerWpa2 timer */
     pAdmCtrl->hPreAuthTimerWpa2 = tmr_CreateTimer (pAdmCtrl->hTimer);
-    if (pAdmCtrl->hPreAuthTimerWpa2 == NULL)
-    {
-        TRACE0(pAdmCtrl->hReport, REPORT_SEVERITY_ERROR , "admCtrl_config(): Failed to create hPreAuthTimerWpa2!\n");
-    }
 
     status = admCtrl_subConfig(pAdmCtrl);
 
@@ -769,7 +765,6 @@ TI_STATUS admCtrl_parseIe(admCtrl_t *pAdmCtrl, TRsnData *pRsnData, TI_UINT8 **pI
         
         if (length<((*eleHdr)[1] + 2))
         {
-            TRACE2(pAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "admCtrl_parseIe ERROR: pRsnData->ieLen=%d, length=%d\n\n", pRsnData->ieLen,length);
             return TI_OK;
         }
         
@@ -896,7 +891,6 @@ TI_STATUS admCtrl_getAuthEncrCapability(admCtrl_t *pAdmCtrl,
     authEncrCapability->NoOfAuthEncrPairSupported = MAX_AUTH_ENCR_PAIR;
     authEncrCapability->NoOfPMKIDs                = PMKID_MAX_NUMBER;
 
-    TRACE2(pAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "admCtrl get AuthEncr capability:  No. of auth/encr pairs = %d, No of PMKIDs = %d \n", authEncrCapability->NoOfAuthEncrPairSupported, authEncrCapability->NoOfPMKIDs);
 
     /* Copy the hardcoded table of the auth.mode/cipher type */
     for (i = 0; i < MAX_AUTH_ENCR_PAIR; i++)
@@ -905,8 +899,6 @@ TI_STATUS admCtrl_getAuthEncrCapability(admCtrl_t *pAdmCtrl,
             supportedAuthEncrPairs[i].authenticationMode;
         authEncrCapability->authEncrPairs[i].cipherSuite        = 
             supportedAuthEncrPairs[i].cipherSuite;
-
-        TRACE3(pAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "admCtrl get AuthEncr pair list: i = %d, auth mode = %d , cipher suite = %d \n", i, authEncrCapability->authEncrPairs[i].authenticationMode, authEncrCapability->authEncrPairs[i].cipherSuite);
     }
     
     return TI_OK;

@@ -156,17 +156,8 @@ void genSM_Event (TI_HANDLE hGenSM, TI_UINT32 uEvent, void *pData)
     /* sanity check */
 	if (pGenSM == NULL)
 	{
-        TRACE0(pGenSM->hReport, REPORT_SEVERITY_ERROR , "genSM_Event: Handle is NULL!!\n");
 		return;
 	}
-    if (uEvent >= pGenSM->uEventNum)
-    {
-        TRACE3(pGenSM->hReport, REPORT_SEVERITY_ERROR , "genSM_Event: module: %d received event %d, which is out of events boundry %d\n", pGenSM->uModuleLogIndex, uEvent, pGenSM->uEventNum);
-    }
-    if (TI_TRUE == pGenSM->bEventPending)
-    {
-        TRACE3(pGenSM->hReport, REPORT_SEVERITY_ERROR , "genSM_Event: module: %d received event %d, when event %d is pending execution!\n", pGenSM->uModuleLogIndex, uEvent, pGenSM->uEvent);
-    }
 #endif
 
     /* mark that an event is pending */
@@ -179,7 +170,6 @@ void genSM_Event (TI_HANDLE hGenSM, TI_UINT32 uEvent, void *pData)
     /* if an event is currently executing, return (new event will be handled when current event is done) */
     if (TI_TRUE == pGenSM->bInAction)
     {
-        TRACE1(pGenSM->hReport, REPORT_SEVERITY_INFORMATION , ": module: %d delaying execution of event \n", pGenSM->uModuleLogIndex);
         return;
     }
 
@@ -191,7 +181,6 @@ void genSM_Event (TI_HANDLE hGenSM, TI_UINT32 uEvent, void *pData)
         
 
         /* print state transition information */
-		TRACE4(pGenSM->hReport, REPORT_SEVERITY_INFORMATION, "genSM_Event: module %d <currentState = %d, event = %d> --> nextState = %d\n", pGenSM->uModuleLogIndex, pGenSM->uCurrentState, uEvent, pCell->uNextState);
 
         /* mark that event execution is in place */
         pGenSM->bInAction = TI_TRUE;
@@ -228,7 +217,6 @@ TI_UINT32 genSM_GetCurrentState (TI_HANDLE hGenSM)
 
 	if (pGenSM == NULL)
 	{
-        TRACE0(pGenSM->hReport, REPORT_SEVERITY_ERROR , "genSM_GetCurrentState: Handle is NULL!!\n");
 		return 0;
 	}
     return pGenSM->uCurrentState;

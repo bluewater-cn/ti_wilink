@@ -425,7 +425,6 @@ TI_STATUS report_SetParam (TI_HANDLE hReport, TReportParamInfo *pParam)
         break;
 
 	default:
-		TRACE1(hReport, REPORT_SEVERITY_ERROR, "Set param, Params is not supported, %d\n", pParam->paramType);
 		return PARAM_NOT_SUPPORTED;
 	}
 
@@ -453,7 +452,6 @@ TI_STATUS report_GetParam (TI_HANDLE hReport, TReportParamInfo *pParam)
         break;
 
     default:
-        TRACE1(hReport, REPORT_SEVERITY_ERROR, "Get param, Params is not supported, %d\n", pParam->paramType);
         return PARAM_NOT_SUPPORTED;
     }
 
@@ -534,14 +532,13 @@ TI_STATUS report_PrintDump (TI_UINT8 *pData, TI_UINT32 datalen)
         j++;
         if((j % 16) == 0)
         {
-            /* Dump a line every 16 hex digits*/
-            WLAN_OS_REPORT(("%04.4x  %s\n", j-16, dbuf));
             dbuflen = 0;
         }
     }
     /* Flush if something has left in the line*/
     if(dbuflen)
-        WLAN_OS_REPORT(("%04.4x  %s\n", j & 0xfff0, dbuf));
+	{
+	}
 #endif
     return TI_OK;
 }

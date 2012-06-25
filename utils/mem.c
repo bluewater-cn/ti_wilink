@@ -114,10 +114,6 @@ void* mem_Alloc (TI_HANDLE hMem, TI_UINT32 size)
     TMemBlock *pMemBlock;
     TI_UINT32 total = size + sizeof(TMemBlock) + sizeof(TI_UINT32);
 
-  #ifdef TI_MEM_ALLOC_TRACE
-    os_printf ("mem_Alloc(0x%p, %lu) : %u\n", hMem, size, uTotalSize);
-  #endif
-
     pMemBlock = (TMemBlock *) os_memoryAlloc (pMemMng->hOs, total);
     pMemBlock->size = size;
     pMemBlock->signature = MEM_BLOCK_START;
@@ -154,10 +150,6 @@ void* mem_Calloc (TI_HANDLE hMem, TI_UINT32 number, TI_UINT32 size)
 
     total = number * size;
 
- #ifdef TI_MEM_ALLOC_TRACE
-    os_printf ("os_memoryCAlloc(%u, %u) : %u\n", number, size, total);
- #endif
-
     ptr = mem_Alloc (hMem, total);
 
     if (ptr != NULL)
@@ -192,16 +184,9 @@ void mem_Free (TI_HANDLE hMem, void* ptr, TI_UINT32 size)
 {
     TMemMng *pMemMng = (TMemMng *)hMem;
     TMemBlock *pMemBlock = (TMemBlock *)((TI_UINT8 *)ptr - sizeof(TMemBlock));
-   
-  #ifdef TI_MEM_ALLOC_TRACE
-    os_printf ("os_memoryFree(%p, %u)\n", ptr, size);
-  #endif
 
     if (pMemBlock->signature != MEM_BLOCK_START)
     {
-      #ifdef TI_MEM_ALLOC_TRACE
-        os_printf ("os_memoryFree: memory block signature is incorrect - 0x%x\n", pMemBlock->signature);
-      #endif
     }
 
     else
@@ -209,9 +194,6 @@ void mem_Free (TI_HANDLE hMem, void* ptr, TI_UINT32 size)
         *(TI_UINT8 *)(&pMemBlock->signature) = '~';
         if (*(TI_UINT32 *)((TI_UINT8 *)pMemBlock + pMemBlock->size + sizeof(TMemBlock)) != MEM_BLOCK_END)
         {
-          #ifdef TI_MEM_ALLOC_TRACE
-            os_printf ("os_memoryFree: memory block corruption, size - %u\n", pMemBlock->size);
-          #endif
         }
 
         os_memoryFree (pMemMng->hOs, pMemBlock, pMemBlock->signature + sizeof(TMemBlock) + sizeof(TI_UINT32));
@@ -220,10 +202,6 @@ void mem_Free (TI_HANDLE hMem, void* ptr, TI_UINT32 size)
 
         if ((int)pMemMng->uCurAllocated < 0) 
         {
-          #ifdef TI_MEM_ALLOC_TRACE
-            os_printf ("os_memoryFree: memory heap allocation calculation corrupted, size=%u, current=%u\n",
-                       size, drv->cur_heap_bytes_allocated);
-          #endif
             pMemMng->uCurAllocated = 0;
         }
     }

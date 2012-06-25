@@ -60,7 +60,6 @@ TI_HANDLE MacServices_create( TI_HANDLE hOS)
     MacServices_t *pMacServices = (MacServices_t*)os_memoryAlloc( hOS, sizeof(MacServices_t) );
     if ( NULL == pMacServices )
     {
-        WLAN_OS_REPORT( ("ERROR: Failed to create Mac SRV module") );
         return NULL;
     }
 
@@ -165,7 +164,6 @@ void MacServices_init (TI_HANDLE hMacServices,
                        hCmdBld,
                        hTimer) != TI_OK)
     {
-        WLAN_OS_REPORT(("\n.....PowerSRV_init configuration failure \n"));
         /*return TI_NOK;*/
     }
 }
@@ -187,7 +185,6 @@ void MacServices_config( TI_HANDLE hMacServices, TTwdInitParams *pInitParams)
 
     if (powerSrv_config(pMacServices->hPowerSrv,&pInitParams->tPowerSrv) != TI_OK)
     {
-        WLAN_OS_REPORT(("\n.....PowerSRV_config failure \n"));
     }
 
     MacServices_scanSrv_config (pMacServices, &pInitParams->tScanSrv);

@@ -71,7 +71,6 @@ TI_HANDLE List_create(TI_HANDLE hOs,int MaxNumOfElements,int ContainerSize)
 
 	if( hOs  == NULL )
 	{
-	    WLAN_OS_REPORT(("FATAL ERROR:List_create(): OS handle Error - Aborting\n"));
 		return NULL;
 	}
 

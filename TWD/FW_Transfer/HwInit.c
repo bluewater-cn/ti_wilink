@@ -401,7 +401,6 @@ TI_HANDLE hwInit_Create (TI_HANDLE hOs)
 
     if (pHwInit == NULL)
     {
-        WLAN_OS_REPORT(("Error allocating the HwInit Module\n"));
         return NULL;
     }
 
@@ -473,7 +472,6 @@ TI_STATUS hwInit_Init (TI_HANDLE      hHwInit,
         TXN_PARAM_SET(pTxn, TXN_LOW_PRIORITY, TXN_FUNC_ID_WLAN, TXN_DIRECTION_WRITE, TXN_INC_ADDR)
     }
 
-    TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT, ".....HwInit configured successfully\n");
 
     return TI_OK;
 }
@@ -531,7 +529,6 @@ TI_STATUS hwInit_SetFwImage (TI_HANDLE hHwInit, TFileInfo *pFileInfo)
 static void hwInit_SetPartition (THwInit   *pHwInit,
                                  TPartition *pPartition)
 {
-   TRACE7(pHwInit->hReport, REPORT_SEVERITY_INFORMATION, "hwInit_SetPartition: uMemAddr1=0x%x, MemSize1=0x%x uMemAddr2=0x%x, MemSize2=0x%x, uMemAddr3=0x%x, MemSize3=0x%x, uMemAddr4=0x%x, MemSize4=0x%x\n",pPartition[0].uMemAdrr, pPartition[0].uMemSize,pPartition[1].uMemAdrr, pPartition[1].uMemSize,pPartition[2].uMemAdrr, pPartition[2].uMemSize,pPartition[3].uMemAdrr );
 
     /* Prepare partition Txn data and send to HW */
     twIf_SetPartition (pHwInit->hTwIf,pPartition);
@@ -642,7 +639,6 @@ static TI_STATUS hwInit_BootSm (TI_HANDLE hHwInit)
             clkVal = 0x5;
         }
 
-        WLAN_OS_REPORT(("CHIP VERSION... set 1273 chip top registers\n"));
 
         /* set the reference clock freq' to be used (pll_selinpfref field) */
         BUILD_HW_INIT_TXN_DATA(pHwInit, pTxn, PLL_PARAMETERS, clkVal,
@@ -742,27 +738,6 @@ static TI_STATUS hwInit_BootSm (TI_HANDLE hHwInit)
     case 3:
         pHwInit->uInitStage ++;
 
-        /* We don't zero pHwInit->uTxnIndex at the begining because we need it's value to the next transaction */
-         pHwInit->uChipId = pHwInit->aHwInitTxn[pHwInit->uTxnIndex].uData;
-
-        /* This is only sanity check that the HW exists, we can continue and fail on FwLoad */
-		if (pHwInit->uChipId == CHIP_ID_1273_PG10)
-        {
-            WLAN_OS_REPORT(("Error!!  1273 PG 1.0 is not supported anymore!!.\n"));
-        }
-		else if (pHwInit->uChipId == CHIP_ID_1273_PG20)
-        {
-            WLAN_OS_REPORT(("Working on a 1273 PG 2.0 board.\n"));
-        }
-        else
-        {
-            WLAN_OS_REPORT (("Error!! Found unknown Chip Id = 0x%x\n", pHwInit->uChipId));
-
-            /*
-             * NOTE: no exception because of forward compatibility
-             */
-        }
-
         /*
          * Soft reset
          */
@@ -776,9 +751,6 @@ static TI_STATUS hwInit_BootSm (TI_HANDLE hHwInit)
     case 4:
         pHwInit->uInitStage ++;
 
-        TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT , "TNET SOFT-RESET\n");
-
-        WLAN_OS_REPORT(("Starting to process NVS...\n"));
 
         /*
          * Start EEPROM/NVS burst
@@ -788,18 +760,11 @@ static TI_STATUS hwInit_BootSm (TI_HANDLE hHwInit)
         {
             /* NVS file exists (EEPROM-less support) */
             pHwInit->uEEPROMCurLen = pHwInit->uEEPROMLen;
-
-            TRACE2(pHwInit->hReport, REPORT_SEVERITY_INIT , "EEPROM Image addr=0x%x, EEPROM Len=0x0x%x\n", pHwInit->pEEPROMBuf, pHwInit->uEEPROMLen);
-            WLAN_OS_REPORT (("NVS found, EEPROM Image addr=0x%x, EEPROM Len=0x0x%x\n",
-            pHwInit->pEEPROMBuf, pHwInit->uEEPROMLen));
         }
         else
         {
-            WLAN_OS_REPORT (("No Nvs, Setting default MAC address\n"));
             pHwInit->uEEPROMCurLen = DEF_NVS_SIZE;
             pHwInit->pEEPROMBuf = (TI_UINT8*)(&pHwInit->aDefaultNVS[0]);
-            WLAN_OS_REPORT (("pHwInit->uEEPROMCurLen: %x\n", pHwInit->uEEPROMCurLen));
-            WLAN_OS_REPORT (("ERROR: If you are not calibating the device, you will soon get errors !!!\n"));
 
         }
 
@@ -820,7 +785,6 @@ static TI_STATUS hwInit_BootSm (TI_HANDLE hHwInit)
                                REGISTER_SIZE, TXN_DIRECTION_WRITE, NULL, NULL)
             twIf_Transact(pHwInit->hTwIf, pTxn);
 
-            TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT , "DRIVER NVS BURST-READ\n");
         }
         else
         {
@@ -842,7 +806,6 @@ static TI_STATUS hwInit_BootSm (TI_HANDLE hHwInit)
                                REGISTER_SIZE, TXN_DIRECTION_WRITE, NULL, NULL)
             twIf_Transact(pHwInit->hTwIf, pTxn);
 
-            TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT , "STARTING EEPROM NVS BURST-READ\n");
         }
 
         pHwInit->uTxnIndex++;
@@ -861,11 +824,9 @@ static TI_STATUS hwInit_BootSm (TI_HANDLE hHwInit)
         /* Now we can zero the index */
         pHwInit->uTxnIndex = 0;
 
-        WLAN_OS_REPORT(("Chip ID is 0x%X.\n", pHwInit->uBootData));
         /* if the WLAN_EN is ON but MainClock is problamtic the chip-id will be zero*/
         if (pHwInit->uBootData == 0)
         {
-         WLAN_OS_REPORT(("Cannot read ChipID stopping\n", pHwInit->uBootData));
          TWD_FinalizeOnFailure (pHwInit->hTWD);
          return TXN_STATUS_ERROR;
         }
@@ -885,7 +846,6 @@ static TI_STATUS hwInit_BootSm (TI_HANDLE hHwInit)
 
         if (pHwInit->uBootData == 0xffffffff)
         {
-            TRACE0(pHwInit->hReport, REPORT_SEVERITY_FATAL_ERROR , "Error in SCR_PAD2 register\n");
             EXCEPT (pHwInit, TXN_STATUS_ERROR)
         }
 
@@ -939,7 +899,6 @@ static TI_STATUS hwInit_BootSm (TI_HANDLE hHwInit)
 	        status = hwInit_InitTopRegisterRead(hHwInit, 0xCB6);
 
 	        pHwInit->uTopRegValue |= 0x10;
-	        //WLAN_OS_REPORT(("Writing to SDIO Pull up 0x%x.\n", pHwInit->uTopRegValue));
 	        status =  hwInit_InitTopRegisterWrite( hHwInit, 0xCB6, pHwInit->uTopRegValue);
         } else {
 	        status = TI_OK;
@@ -979,7 +938,6 @@ TI_STATUS hwInit_LoadFw (TI_HANDLE hHwInit)
 
     if (pHwInit->pFwBuf)
     {
-        TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT , "CPU halt -> download code\n");
 
         /* Load firmware image */
         pHwInit->uLoadStage = 0;
@@ -990,13 +948,10 @@ TI_STATUS hwInit_LoadFw (TI_HANDLE hHwInit)
         case TI_OK:
         case TXN_STATUS_OK:
         case TXN_STATUS_COMPLETE:
-            WLAN_OS_REPORT (("Firmware successfully downloaded.\n"));
             break;
         case TXN_STATUS_PENDING:
-            WLAN_OS_REPORT (("Starting to download firmware...\n"));
             break;
         default:
-            TRACE0(pHwInit->hReport, REPORT_SEVERITY_ERROR , "Firmware download failed!\n");
             break;
         }
 
@@ -1004,12 +959,10 @@ TI_STATUS hwInit_LoadFw (TI_HANDLE hHwInit)
     }
     else
     {
-        TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT , "Firmware not downloaded...\n");
 
         EXCEPT (pHwInit, TXN_STATUS_ERROR)
     }
 
-    WLAN_OS_REPORT (("FW download OK...\n"));
     return TI_OK;
 }
 
@@ -1071,7 +1024,6 @@ static TI_STATUS hwInit_FinalizeDownloadSm (TI_HANDLE hHwInit)
                                REGISTER_SIZE, TXN_DIRECTION_WRITE, NULL, NULL)
             twIf_Transact(pHwInit->hTwIf, pTxn);
 
-            WLAN_OS_REPORT (("Firmware running.\n"));
 
             /*
              * CHIP ID Debug
@@ -1092,9 +1044,7 @@ static TI_STATUS hwInit_FinalizeDownloadSm (TI_HANDLE hHwInit)
             /* We don't zero pHwInit->uTxnIndex at the begining because we need it's value to the next transaction */
             pHwInit->uFinData = pHwInit->aHwInitTxn[pHwInit->uTxnIndex].uData;
 
-            TRACE1(pHwInit->hReport, REPORT_SEVERITY_INIT , "CHIP ID IS %x\n", pHwInit->uFinData);
 
-            TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT , "Wait init complete\n");
 
         case 3:
             pHwInit->uTxnIndex = 0;
@@ -1129,7 +1079,6 @@ static TI_STATUS hwInit_FinalizeDownloadSm (TI_HANDLE hHwInit)
 
             if (pHwInit->uFinData == 0xffffffff) /* error */
             {
-                TRACE0(pHwInit->hReport, REPORT_SEVERITY_ERROR , "Error reading hardware complete init indication\n");
 
                 pHwInit->DownloadStatus = TXN_STATUS_ERROR;
                 EXCEPT (pHwInit, TXN_STATUS_ERROR)
@@ -1158,13 +1107,11 @@ static TI_STATUS hwInit_FinalizeDownloadSm (TI_HANDLE hHwInit)
 
             if (pHwInit->uFinLoop >= FIN_LOOP)
             {
-                TRACE0(pHwInit->hReport, REPORT_SEVERITY_ERROR , "Timeout waiting for the hardware to complete initialization\n");
 
                 pHwInit->DownloadStatus = TXN_STATUS_ERROR;
                 EXCEPT (pHwInit, TXN_STATUS_ERROR);
             }
 
-            TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT , "Firmware init complete...\n");
 
             /*
              * There are valid addresses of the command and event mailbox
@@ -1211,7 +1158,6 @@ static TI_STATUS hwInit_FinalizeDownloadSm (TI_HANDLE hHwInit)
 
 			if (machine_is_latte()) {
 				status =  hwInit_InitTopRegisterRead( hHwInit, 0x50a);
-				WLAN_OS_REPORT(("Reading 0x50a ==  0x%x.\n", pHwInit->uTopRegValue));
 
 
 				if (pHwInit->uTopRegValue & 0x1) // low
@@ -1221,7 +1167,6 @@ static TI_STATUS hwInit_FinalizeDownloadSm (TI_HANDLE hHwInit)
 				else // medium
 					pHwInit->uTopRegValue = 0x1c;
 
-				WLAN_OS_REPORT(("Writing to WL_DIG_LDO_TRIM  0x%x.\n", pHwInit->uTopRegValue));
 				status =  hwInit_InitTopRegisterWrite( hHwInit, 0x45a, pHwInit->uTopRegValue);
 			} else {
 				status = TI_OK;
@@ -1357,7 +1302,6 @@ static TI_STATUS hwInit_EepromlessStartBurstSm (TI_HANDLE hHwInit)
                                 (pHwInit->pEEPROMCurPtr[2] << 16) |
                                 (pHwInit->pEEPROMCurPtr[3] << 24));
 
-                TRACE2(pHwInit->hReport, REPORT_SEVERITY_INIT , "NVS::BurstRead: *(%08x) = %x\n", pHwInit->uEEPROMRegAddr, val);
 
                 BUILD_HW_INIT_TXN_DATA(pHwInit, pTxn, (REGISTERS_BASE+pHwInit->uEEPROMRegAddr), val,
                                REGISTER_SIZE, TXN_DIRECTION_WRITE, (TTxnDoneCb)hwInit_EepromlessStartBurstSm, hHwInit)
@@ -1392,7 +1336,6 @@ static TI_STATUS hwInit_EepromlessStartBurstSm (TI_HANDLE hHwInit)
             continue;
 
         case 3:
-            TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT , "Reached TLV section\n");
 
             /* Align the host address */
             if (((TI_UINT32)pHwInit->pEEPROMCurPtr & WORD_ALIGNMENT_MASK) && (pHwInit->uEEPROMCurLen > 0) )
@@ -1404,7 +1347,6 @@ static TI_STATUS hwInit_EepromlessStartBurstSm (TI_HANDLE hHwInit)
                 pHwInit->uEEPROMCurLen-= uDeltaLength;
             }
 
-            TRACE2(pHwInit->hReport, REPORT_SEVERITY_INIT , "NVS::WriteTLV: pEEPROMCurPtr= %x, Length=%d\n", pHwInit->pEEPROMCurPtr, pHwInit->uEEPROMCurLen);
 
             if (pHwInit->uEEPROMCurLen)
             {
@@ -1479,11 +1421,9 @@ static TI_STATUS hwInit_LoadFwImageSm (TI_HANDLE hHwInit)
 			/* Check the Downloaded FW alignment */
 			if ((pHwInit->uFwLength % ADDRESS_SIZE) != 0)
 			{
-				TRACE1(pHwInit->hReport, REPORT_SEVERITY_ERROR , "Length of downloaded Portion (%d) is not aligned\n",pHwInit->uFwLength);
 				EXCEPT_L (pHwInit, TXN_STATUS_ERROR);
 			}
 
-			TRACE2(pHwInit->hReport, REPORT_SEVERITY_INIT , "Image addr=0x%x, Len=0x%x\n", pHwInit->pFwBuf, pHwInit->uFwLength);
 
 	/* Set bus memory partition to current download area */
            SET_FW_LOAD_PARTITION(pHwInit->aPartition,pHwInit->uFwAddress)
@@ -1525,14 +1465,11 @@ static TI_STATUS hwInit_LoadFwImageSm (TI_HANDLE hHwInit)
                     hwInit_SetPartition (pHwInit,pHwInit->aPartition);
                     TxnStatus = TXN_STATUS_OK;
 					pHwInit->uBlockWriteNum = 0;
-                    TRACE1(pHwInit->hReport, REPORT_SEVERITY_INIT , "Change partition to address offset = 0x%x\n", 									   pHwInit->uFwAddress + pHwInit->uBlockWriteNum * MAX_SDIO_BLOCK);
-                    EXCEPT_L (pHwInit, TxnStatus);
                 }
             }
             else
             {
                 pHwInit->uLoadStage = 4;
-                TRACE0(pHwInit->hReport, REPORT_SEVERITY_INIT , "Load firmware with Portions\n");
             }
             continue;
 
@@ -1554,10 +1491,6 @@ static TI_STATUS hwInit_LoadFwImageSm (TI_HANDLE hHwInit)
             TxnStatus = twIf_Transact(pHwInit->hTwIf, pTxn);
 
             /* Log ERROR if the transaction returned ERROR */
-            if (TxnStatus == TXN_STATUS_ERROR)
-            {
-                TRACE1(pHwInit->hReport, REPORT_SEVERITY_ERROR , "hwInit_LoadFwImageSm: twIf_Transact retruned status=0x%x\n", TxnStatus);
-            }
 
 			pHwInit->uBlockWriteNum ++;
 			pHwInit->uBlockReadNum ++;
@@ -1588,10 +1521,6 @@ static TI_STATUS hwInit_LoadFwImageSm (TI_HANDLE hHwInit)
                                      (TTxnDoneCb)hwInit_LoadFwImageSm, hHwInit)
             TxnStatus = twIf_Transact(pHwInit->hTwIf, pTxn);
 
-            if (TxnStatus == TXN_STATUS_ERROR)
-			{
-                TRACE1(pHwInit->hReport, REPORT_SEVERITY_ERROR , "hwInit_LoadFwImageSm: last block retruned status=0x%x\n", TxnStatus);
-			}
 
             EXCEPT_L (pHwInit, TxnStatus);
             continue;
@@ -1603,7 +1532,6 @@ static TI_STATUS hwInit_LoadFwImageSm (TI_HANDLE hHwInit)
 			if ( pHwInit->bFwBufLast == TI_TRUE )
 			{
 				/* The download has completed */
-				WLAN_OS_REPORT (("Finished downloading firmware.\n"));
 				status = hwInit_FinalizeDownloadSm (hHwInit);
 			}
 			/* Have to wait to more FW Portions */
@@ -1737,7 +1665,6 @@ TI_STATUS hwInit_ReadRadioParamsSm (TI_HANDLE hHwInit)
               }
               else
               {
-                TRACE0(pHwInit->hReport, REPORT_SEVERITY_ERROR , "can't writing bt_func7_sel\n");
 
                 TWD_FinalizeFEMRead(pHwInit->hTWD);
 
@@ -1754,7 +1681,6 @@ TI_STATUS hwInit_ReadRadioParamsSm (TI_HANDLE hHwInit)
               else
               {
 
-                TRACE0(pHwInit->hReport, REPORT_SEVERITY_ERROR , "Timeout waiting for writing bt_func7_sel\n");
 
                 TWD_FinalizeFEMRead(pHwInit->hTWD);
 
@@ -1881,7 +1807,6 @@ TI_STATUS hwInit_ReadRadioParamsSm (TI_HANDLE hHwInit)
 	      {
 	  	   pGenParams->TXBiPFEMManufacturer = FEM_RFMD_TYPE_E;
 	      }
-               WLAN_OS_REPORT (("FEM Type %d \n",pGenParams->TXBiPFEMManufacturer));
 			   pHwInit->uTxnIndex = 0;
                pHwInit->uRegSeqStage = 1;
                pHwInit->uRegStage = 2;
@@ -1890,7 +1815,6 @@ TI_STATUS hwInit_ReadRadioParamsSm (TI_HANDLE hHwInit)
              }
              else
              {
-              TRACE0(pHwInit->hReport, REPORT_SEVERITY_INFORMATION, "hwInit_ReadRadioParamsSm Ended Successfully\n");
 
               TWD_FinalizeFEMRead(pHwInit->hTWD);
 
@@ -2038,7 +1962,6 @@ TI_STATUS hwInit_InitPolarity(TI_HANDLE hHwInit)
                }
                else
                {
-                 TRACE0(pHwInit->hReport, REPORT_SEVERITY_ERROR , "can't writing bt_func7_sel\n");
                  TWD_FinalizePolarityRead(pHwInit->hTWD);
 
                 return TI_NOK;
@@ -2054,7 +1977,6 @@ TI_STATUS hwInit_InitPolarity(TI_HANDLE hHwInit)
                else
                {
 
-                 TRACE0(pHwInit->hReport, REPORT_SEVERITY_ERROR , "Timeout waiting for writing bt_func7_sel\n");
                  TWD_FinalizePolarityRead(pHwInit->hTWD);
 
                 return TI_NOK;
@@ -2082,11 +2004,9 @@ TI_STATUS hwInit_InitPolarity(TI_HANDLE hHwInit)
                 pHwInit->uTxnIndex++;
 
 #ifdef USE_IRQ_ACTIVE_HIGH
-                TRACE0(pHwInit->hReport, REPORT_SEVERITY_INFORMATION , "Hwinit IRQ polarity active high\n");
                 val |= 0x0<<1;
 
 #else
-                TRACE0(pHwInit->hReport, REPORT_SEVERITY_INFORMATION , "Hwinit IRQ polarity active low\n");
                 val |= 0x01<<1;
 #endif
 
@@ -2315,7 +2235,6 @@ TI_STATUS hwInit_InitTopRegisterRead(TI_HANDLE hHwInit, TI_UINT32 uAddress)
                }
                else
                {
-                 TRACE0(pHwInit->hReport, REPORT_SEVERITY_ERROR , "can't write bt_func7_sel\n");
                  if (pHwInit->uTopStatus == TXN_STATUS_PENDING)
                  {
                        hwInit_BootSm (hHwInit);
@@ -2332,7 +2251,6 @@ TI_STATUS hwInit_InitTopRegisterRead(TI_HANDLE hHwInit, TI_UINT32 uAddress)
                }
                else
                {
-                 TRACE0(pHwInit->hReport, REPORT_SEVERITY_ERROR , "Timeout waiting for writing bt_func7_sel\n");
                  if (pHwInit->uTopStatus == TXN_STATUS_PENDING)
                  {
                        hwInit_BootSm (hHwInit);

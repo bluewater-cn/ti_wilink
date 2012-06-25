@@ -122,7 +122,6 @@ TI_STATUS keyParserWep_recv(struct _keyParser_t *pKeyParser,
 	
 	if (pKeyData == NULL)
 	{
-TRACE0(pKeyParser->hReport, REPORT_SEVERITY_ERROR, "WEP_KEY_PARSER: ERROR: NULL KEY Data\n");
 		return TI_NOK;
 	}
 	
@@ -130,13 +129,11 @@ TRACE0(pKeyParser->hReport, REPORT_SEVERITY_ERROR, "WEP_KEY_PARSER: ERROR: NULL 
 
 	if ((pKeyDesc->KeyLength < MIN_KEY_LEN ) || (pKeyDesc->KeyLength >= MAX_KEY_LEN ))
     {
-        TRACE1(pKeyParser->hReport, REPORT_SEVERITY_ERROR, "WEP_KEY_PARSER: ERROR: Key Length out of bounds=%d\n", pKeyDesc->KeyLength);
         return TI_NOK;
     }
 
     if (pKeyDesc->KeyIndex & WEP_KEY_REMAIN_BITS_MASK)
     {  /* the reamining bits in the key index are not 0 (when they should be) */
-TRACE0(pKeyParser->hReport, REPORT_SEVERITY_ERROR, "WEP_KEY_PARSER: ERROR: Key index bits 8-29 should be 0 !!!\n");
 		return TI_NOK;
     }
 
@@ -145,14 +142,12 @@ TRACE0(pKeyParser->hReport, REPORT_SEVERITY_ERROR, "WEP_KEY_PARSER: ERROR: Key i
     securityKey.keyIndex = pKeyDesc->KeyIndex;
     os_memoryCopy(pKeyParser->hOs, (void *)securityKey.encKey, pKeyDesc->KeyMaterial, pKeyDesc->KeyLength);
 	
-    TRACE2(pKeyParser->hReport, REPORT_SEVERITY_INFORMATION, "WEP_KEY_PARSER: Key received keyId=%x, keyLen=%d\n",						    pKeyDesc->KeyIndex, pKeyDesc->KeyLength);
 
 
     /* We accept only 40, 104 or 232 -bit WEP keys*/
     if (!((securityKey.encLen == WEP_KEY_LEN_40) || (securityKey.encLen == WEP_KEY_LEN_104) 
           || (securityKey.encLen == WEP_KEY_LEN_232)))
     {	/*Invalid key length*/
-        TRACE1(pKeyParser->hReport, REPORT_SEVERITY_ERROR, "WEP_KEY_PARSER: ERROR: Invalid Key length: %d !!!\n", securityKey.encLen);
         return TI_NOK;
     }
     /* configure key for Tx and Rx */
@@ -181,7 +176,6 @@ TI_STATUS keyParserWep_remove(struct _keyParser_t *pKeyParser, TI_UINT8 *pKeyDat
 
 	if (pKeyData == NULL)
 	{
-TRACE0(pKeyParser->hReport, REPORT_SEVERITY_ERROR, "EXT_KEY_PARSER: ERROR: NULL KEY Data\n");
 		return TI_NOK;
 	}
 	
@@ -189,7 +183,6 @@ TRACE0(pKeyParser->hReport, REPORT_SEVERITY_ERROR, "EXT_KEY_PARSER: ERROR: NULL 
 
     if (pKeyDesc->KeyIndex & WEP_KEY_TRANSMIT_MASK)
 	{	/* Bit 31 should always be zero */
-TRACE0(pKeyParser->hReport, REPORT_SEVERITY_ERROR, "WEP_KEY_PARSER: ERROR: Remove TX key index\n");
 		return TI_NOK;
 	}
 

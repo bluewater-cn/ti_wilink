@@ -74,7 +74,6 @@ void SoftGeminiDebugFunction( TI_HANDLE hSoftGemini,TI_UINT32 funcType, void *pP
 		break;
 
 	default:
-		WLAN_OS_REPORT(("Invalid function type in soft gemini debug function: %d\n", funcType));
 		break;
 	}
 }
@@ -88,13 +87,6 @@ void SoftGeminiDebugFunction( TI_HANDLE hSoftGemini,TI_UINT32 funcType, void *pP
  */
 void printSoftGeminiDbgFunctions(void)
 {
-    WLAN_OS_REPORT(("   Scan Concentrator Debug Functions   \n"));
-	WLAN_OS_REPORT(("---------------------------------------\n"));
-	WLAN_OS_REPORT(("1800 - Print the soft gemini Debug Help\n"));
-	WLAN_OS_REPORT(("1801 - Print soft gemini parameters    \n"));
-	WLAN_OS_REPORT(("1802 - Trigger Sense Mode (enable - 1)	\n"));
-	WLAN_OS_REPORT(("1803 - Trigger Protective Mode	(ON - 1)\n"));
-
 }
 
 /**

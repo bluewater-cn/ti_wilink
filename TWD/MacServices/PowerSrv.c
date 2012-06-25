@@ -102,7 +102,6 @@ TI_HANDLE powerSrv_create(TI_HANDLE hOs)
     pPowerSrv = (powerSrv_t*) os_memoryAlloc (hOs, sizeof(powerSrv_t));
     if ( pPowerSrv == NULL )
     {
-        WLAN_OS_REPORT(("powerSrv_create - Memory Allocation Error!\n"));
         return NULL;
     }
 
@@ -114,7 +113,6 @@ TI_HANDLE powerSrv_create(TI_HANDLE hOs)
     pPowerSrv->hPowerSrvSM = powerSrvSM_create(hOs);
     if ( pPowerSrv->hPowerSrvSM == NULL )
     {
-        WLAN_OS_REPORT(("powerSrv_create - Error in create PowerSrvSM module!\n"));
         powerSrv_destroy(pPowerSrv);
         return NULL;
     }
@@ -218,7 +216,6 @@ TI_STATUS powerSrv_init (TI_HANDLE hPowerSrv,
 
     eventMbox_UnMaskEvent (hEventMbox, TWD_OWN_EVENT_PS_REPORT, NULL, NULL);
 
-    TRACE0(pPowerSrv->hReport, REPORT_SEVERITY_INIT, "powerSrv Initialized \n");
 
     return TI_OK;
 }
@@ -578,14 +575,12 @@ static void powerSrv802_11PsReport(TI_HANDLE hPowerSrv, char* str , TI_UINT32 st
     /*copy the event*/
     os_memoryCopy(pPowerSrv->hOS, (void *)&PowerSaveStatus, (void *)str, strLen);
 
-    TRACE1( pPowerSrv->hReport, REPORT_SEVERITY_INFORMATION, "PS callback with status: %d\n", PowerSaveStatus);
 
     /* Handling the event*/
     switch ( (EventsPowerSave_e)PowerSaveStatus )
     {
     case ENTER_POWER_SAVE_FAIL:
     case EXIT_POWER_SAVE_FAIL:
-        TRACE0( pPowerSrv->hReport, REPORT_SEVERITY_WARNING, "Power save enter or exit failed!\n");
         powerSrvSM_SMApi(pPowerSrv->hPowerSrvSM,POWER_SRV_EVENT_FAIL);
         break;
 
@@ -600,7 +595,6 @@ static void powerSrv802_11PsReport(TI_HANDLE hPowerSrv, char* str , TI_UINT32 st
         break;
 
     default:
-        TRACE1( pPowerSrv->hReport, REPORT_SEVERITY_ERROR, "Unrecognized status at PS callback %d\n", PowerSaveStatus );
         break;
     }
 

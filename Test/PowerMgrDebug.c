@@ -84,8 +84,6 @@ void powerMgrDebugFunction(TI_HANDLE thePowerMgrHandle,
         break;
 
     default:
-        WLAN_OS_REPORT(("(%d) - ERROR - Invalid function type in POWER MANAGER DEBUG Function Command: %d\n",
-                        __LINE__,theDebugFunction));
         break;
     }
 }
@@ -95,14 +93,5 @@ void powerMgrDebugFunction(TI_HANDLE thePowerMgrHandle,
  *****************************************************************************/
 static void PowerMgrDebug_printAllCommands(void)
 {
-    WLAN_OS_REPORT(("\n\n"));
-    WLAN_OS_REPORT(("POWER MGR DEBUG module commands:\n"));
-    WLAN_OS_REPORT(("================================\n"));
-    WLAN_OS_REPORT(("syntax         description\n"));
-    WLAN_OS_REPORT(("%d -  POWER_MGR_DEBUG_PRINT_ALL_COMMANDS\n", POWER_MGR_DEBUG_PRINT_ALL_COMMANDS));
-    WLAN_OS_REPORT(("%d -  POWER_MGR_DEBUG_START_PS\n", POWER_MGR_DEBUG_START_PS));
-    WLAN_OS_REPORT(("%d -  POWER_MGR_DEBUG_STOP_PS\n", POWER_MGR_DEBUG_STOP_PS));
-    WLAN_OS_REPORT(("%d -  POWER_MGR_PRINT_OBJECTS\n", POWER_MGR_PRINT_OBJECTS));
-    WLAN_OS_REPORT(("\n\n"));
 }
 

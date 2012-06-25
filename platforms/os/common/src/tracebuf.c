@@ -149,8 +149,6 @@ void tb_dump(void)
 {
 	int j, pos;
 
-	WLAN_OS_REPORT(("Trace Dump:\n"));
-	WLAN_OS_REPORT(("===========\n\n"));
     if (tb_control->count < TB_NUM_ENTRIES)
     {
         pos = 0;
@@ -161,11 +159,6 @@ void tb_dump(void)
     }
 	for (j=0; (unsigned int)j < tb_min((unsigned int)TB_NUM_ENTRIES,(unsigned int)tb_control->count); j++)
 	{
-		WLAN_OS_REPORT(("%4i %08x %08x %08x %08x\n", j,
-			(int)tb_control->entry[pos].ts,
-			(int)tb_control->entry[pos].loc,
-			(int)tb_control->entry[pos].p1,
-			(int)tb_control->entry[pos].p2));
 		pos = (pos+1) % TB_NUM_ENTRIES;
 	}
 
@@ -194,8 +187,6 @@ void tb_printf(void)
     unsigned long saved_options=tb_control->options;
 
     tb_set_option(TB_OPTION_STOP);
-	WLAN_OS_REPORT(("Trace Dump:\n"));
-	WLAN_OS_REPORT(("===========\n\n"));
     if (tb_control->count < TB_NUM_ENTRIES)
     {
         pos = 0;
@@ -206,8 +197,6 @@ void tb_printf(void)
     }
 	for (j=0; (unsigned int)j < tb_min((unsigned int)TB_NUM_ENTRIES,(unsigned int)tb_control->count); j++)
 	{
-		WLAN_OS_REPORT(("%4i id=0x%8x %s \n", j,
-tb_control->entry[pos].loc, tb_control->entry[pos].msg));
 		pos = (pos+1) % TB_NUM_ENTRIES;
 	}
     tb_control->options = saved_options;

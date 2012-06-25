@@ -174,8 +174,6 @@ void conn_init (TStadHandlesList *pStadHandles)
     pConn->hTxCtrl          = pStadHandles->hTxCtrl;
     pConn->hTimer           = pStadHandles->hTimer;
 	pConn->hSoftGemini		= pStadHandles->hSoftGemini;
-
-    TRACE0(pConn->hReport, REPORT_SEVERITY_INIT, ".....Connection configured successfully\n");
 }
 
 
@@ -191,7 +189,6 @@ TI_STATUS conn_SetDefaults (TI_HANDLE 	hConn, connInitParams_t		*pConnInitParams
     pConn->hConnTimer = tmr_CreateTimer (pConn->hTimer);
 	if (pConn->hConnTimer == NULL)
 	{
-        TRACE0(pConn->hReport, REPORT_SEVERITY_ERROR, "conn_SetDefaults(): Failed to create hConnTimer!\n");
 		release_module (pConn);
 		return TI_NOK;
 	}
@@ -275,7 +272,6 @@ TI_STATUS conn_setParam(TI_HANDLE		hConn,
 			return conn_infraConfig(pConn);
 
 		default:
-TRACE1(pConn->hReport, REPORT_SEVERITY_ERROR, "Set connection type, type is not valid, %d\n\n", pParam->content.connType);
 			return PARAM_VALUE_NOT_VALID;
 		}
 
@@ -286,7 +282,6 @@ TRACE1(pConn->hReport, REPORT_SEVERITY_ERROR, "Set connection type, type is not 
 		break;
 
 	default:
-TRACE1(pConn->hReport, REPORT_SEVERITY_ERROR, "Set param, Params is not supported, %d\n\n", pParam->paramType);
 		return PARAM_NOT_SUPPORTED;
 	}
 
@@ -324,7 +319,6 @@ TI_STATUS conn_getParam(TI_HANDLE		hConn,
 		break;
 	
 	default:
-TRACE1(pConn->hReport, REPORT_SEVERITY_ERROR, "Get param, Params is not supported, %d\n\n", pParam->paramType);
 		return PARAM_NOT_SUPPORTED;
 	}
 
@@ -384,7 +378,6 @@ TI_STATUS conn_start(TI_HANDLE hConn,
 		return conn_infraSMEvent(&pConn->state, CONN_INFRA_CONNECT, (TI_HANDLE) pConn);
 
     default:
-TRACE1(pConn->hReport, REPORT_SEVERITY_ERROR, "Start connection, invalid type %d\n\n", pConn->currentConnType);
 		return TI_NOK;
 
 	}
@@ -427,8 +420,6 @@ TI_STATUS conn_stop(TI_HANDLE 				hConn,
 	pConn->smContext.disAssocEventStatusCode  = 0;
 
 
-    TRACE3(pConn->hReport, REPORT_SEVERITY_INFORMATION, "conn_stop, disConnType %d, reason=%d, disConEraseKeys=%d\n\n", disConnType, reason, disConEraseKeys);
-
 	switch(pConn->currentConnType)
 	{
 	case CONNECTION_IBSS:
@@ -441,7 +432,6 @@ TI_STATUS conn_stop(TI_HANDLE 				hConn,
 
 
 	default:
-TRACE1(pConn->hReport, REPORT_SEVERITY_ERROR, "Stop connection, invalid type %d\n\n", pConn->currentConnType);
 		return TI_NOK;
 	}
 }
@@ -480,21 +470,11 @@ TI_STATUS conn_reportMlmeStatus(TI_HANDLE			hConn,
 	}
 	else
 	{
-        TRACE0(pConn->hReport, REPORT_SEVERITY_CONSOLE,"-------------------------------------\n");
-        TRACE0(pConn->hReport, REPORT_SEVERITY_CONSOLE,"               CONN LOST             \n");
-        TRACE0(pConn->hReport, REPORT_SEVERITY_CONSOLE,"-------------------------------------\n");
-
-
-		WLAN_OS_REPORT(("-------------------------------------\n"));
-		WLAN_OS_REPORT(("               CONN LOST             \n"));
-		WLAN_OS_REPORT(("-------------------------------------\n"));
 
 		if( pConn->connType == CONN_TYPE_ROAM )
 			pConn->disConnType = DISCONNECT_IMMEDIATE;
 		else /* connType == CONN_TYPE_ESS */
 			pConn->disConnType = DISCONNECT_DE_AUTH;
-
-        TRACE4(pConn->hReport, REPORT_SEVERITY_INFORMATION, "conn_reportMlmeStatus, disAssocEventReason %d, disAssocEventStatusCode = %d, connType=%d, disConnType=%d \n", pConn->smContext.disAssocEventReason, pConn->smContext.disAssocEventStatusCode, pConn->connType, pConn->disConnType);
 
 		conn_infraSMEvent(&pConn->state, CONN_INFRA_DISCONNECT, pConn);
 	}
@@ -550,8 +530,6 @@ TI_STATUS conn_reportRsnStatus(TI_HANDLE			hConn,
 				pConn->disConnType = DISCONNECT_IMMEDIATE;
 			else /* connType == CONN_TYPE_ESS */
 				pConn->disConnType = DISCONNECT_DE_AUTH;
-
-            TRACE3(pConn->hReport, REPORT_SEVERITY_INFORMATION, "conn_reportRsnStatus, disAssocEventReason %d, connType=%d, disConnType=%d \n\n", pConn->smContext.disAssocEventReason, pConn->connType, pConn->disConnType);
 
 			return conn_infraSMEvent(&pConn->state, CONN_INFRA_DISCONNECT, (TI_HANDLE) pConn);
 		}
@@ -686,9 +664,7 @@ static void conn_DisconnectComplete (conn_t *pConn, TI_UINT8  *data, TI_UINT8   
 		connInfra_DisconnectComplete(pConn, data, dataLength);
 		break;
 
-    default:
-		TRACE1(pConn->hReport, REPORT_SEVERITY_ERROR, "conn_DisconnectComplete, invalid type %d\n\n", pConn->currentConnType);
-		
+    default:{}
 	}
 }
 
@@ -711,11 +687,7 @@ static void conn_DisconnectComplete (conn_t *pConn, TI_UINT8  *data, TI_UINT8   
 * \sa 
 */
 void conn_ibssPrintStatistics(TI_HANDLE hConn)
-{   
-    conn_t *pConn = (conn_t *)hConn;
-
-    WLAN_OS_REPORT(("- IBSS Disconnect = %d\n", pConn->ibssDisconnectCount));
-    WLAN_OS_REPORT(("\n"));
+{
 }
 #endif /*#ifdef REPORT_LOG*/
 

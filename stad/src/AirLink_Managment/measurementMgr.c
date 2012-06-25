@@ -198,7 +198,6 @@ void measurementMgr_init (TStadHandlesList *pStadHandles)
 
     measurementMgrSM_config ((TI_HANDLE)pMeasurementMgr);   
 
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INIT , ": Measurement Manager configured successfully\n");
 }
 
 
@@ -216,7 +215,6 @@ TI_STATUS measurementMgr_SetDefaults (TI_HANDLE hMeasurementMgr, measurementInit
     pMeasurementMgr->hActivationDelayTimer = tmr_CreateTimer (pMeasurementMgr->hTimer);
     if (pMeasurementMgr->hActivationDelayTimer == NULL)
     {
-        TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "measurementMgr_SetDefaults(): Failed to create hActivationDelayTimer!\n");
         return TI_NOK;
     }
 
@@ -229,7 +227,6 @@ TI_STATUS measurementMgr_SetDefaults (TI_HANDLE hMeasurementMgr, measurementInit
         pMeasurementMgr->hTsMetricsReportTimer[currAC] = tmr_CreateTimer (pMeasurementMgr->hTimer);
         if (pMeasurementMgr->hTsMetricsReportTimer[currAC] == NULL)
         {
-            TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "measurementMgr_SetDefaults(): Failed to create hTsMetricsReportTimer!\n");
             return TI_NOK;
         }
     }
@@ -264,8 +261,6 @@ TI_STATUS measurementMgr_setParam(TI_HANDLE hMeasurementMgr, paramInfo_t * pPara
     {
         case MEASUREMENT_ENABLE_DISABLE_PARAM:
         {
-            TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MEASUREMENT_ENABLE_DISABLE_PARAM <- %d\n", pParam->content.measurementEnableDisableStatus);
-
             if (pParam->content.measurementEnableDisableStatus)
             {
                 measurementMgr_enable(pMeasurementMgr);
@@ -283,13 +278,7 @@ TI_STATUS measurementMgr_setParam(TI_HANDLE hMeasurementMgr, paramInfo_t * pPara
             if ((pParam->content.measurementTrafficThreshold >= MEASUREMENT_TRAFFIC_THRSHLD_MIN) &&
                 (pParam->content.measurementTrafficThreshold <= MEASUREMENT_TRAFFIC_THRSHLD_MAX))
             {
-                TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MEASUREMENT_TRAFFIC_THRESHOLD_PARAM <- %d\n", pParam->content.measurementTrafficThreshold);
-
                 pMeasurementMgr->trafficIntensityThreshold = pParam->content.measurementTrafficThreshold;
-            }
-            else
-            {
-                TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, ": Invalid value for MEASUREMENT_TRAFFIC_THRESHOLD_PARAM (%d)\n", pParam->content.measurementTrafficThreshold);
             }
         
             break;
@@ -298,8 +287,6 @@ TI_STATUS measurementMgr_setParam(TI_HANDLE hMeasurementMgr, paramInfo_t * pPara
         
         case MEASUREMENT_MAX_DURATION_PARAM:
         {
-            TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MEASUREMENT_MAX_DURATION_PARAM <- %d\n", pParam->content.measurementMaxDuration);
-
             pMeasurementMgr->maxDurationOnNonServingChannel = pParam->content.measurementMaxDuration;
 
             break;
@@ -308,8 +295,6 @@ TI_STATUS measurementMgr_setParam(TI_HANDLE hMeasurementMgr, paramInfo_t * pPara
 
         default:
         {
-            TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, ": Specified parameter is not supported (%d)\n", pParam->paramType);
-
             return PARAM_NOT_SUPPORTED;
         }
 
@@ -332,38 +317,17 @@ TI_STATUS measurementMgr_setParam(TI_HANDLE hMeasurementMgr, paramInfo_t * pPara
  */
 TI_STATUS measurementMgr_getParam(TI_HANDLE hMeasurementMgr, paramInfo_t * pParam)
 {
-    measurementMgr_t * pMeasurementMgr = (measurementMgr_t *) hMeasurementMgr;
-
     switch(pParam->paramType)
     {
 
         case MEASUREMENT_GET_STATUS_PARAM:
         {
-            WLAN_OS_REPORT(("%s: \n\n", __FUNCTION__));
-            WLAN_OS_REPORT(("MeasurementMgr Status Report:\n\n"));
-
-            WLAN_OS_REPORT(("Current State: %d\n\n", pMeasurementMgr->currentState));
-
-            WLAN_OS_REPORT(("Connected: %d\n", pMeasurementMgr->Connected));
-            WLAN_OS_REPORT(("Enabled: %d\n\n", pMeasurementMgr->Enabled));
-
-            WLAN_OS_REPORT(("Mode: %d\n", pMeasurementMgr->Mode));
-            WLAN_OS_REPORT(("Capabilities: %d\n\n", pMeasurementMgr->Capabilities));
-
-            WLAN_OS_REPORT(("current Frame Type: %d\n", pMeasurementMgr->currentFrameType));
-            WLAN_OS_REPORT(("Measured Channel: %d\n", pMeasurementMgr->measuredChannelID));
-            WLAN_OS_REPORT(("Serving Channel: %d\n", pMeasurementMgr->servingChannelID));
-            WLAN_OS_REPORT(("Traffic Intensity Threshold: %d\n", pMeasurementMgr->trafficIntensityThreshold));
-            WLAN_OS_REPORT(("Max Duration on Nonserving Channel: %d\n", pMeasurementMgr->maxDurationOnNonServingChannel));
-
             break;
         }
         
 
         default:
         {
-            TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, ": Specified parameter is not supported (%d)\n", pParam->paramType);
-
             return PARAM_NOT_SUPPORTED;
         }
 
@@ -392,8 +356,6 @@ TI_STATUS measurementMgr_connected(TI_HANDLE hMeasurementMgr)
     if (pMeasurementMgr->Mode == MSR_MODE_NONE)
         return TI_OK;
 
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MeasurementMgr set to connected.\n");
-
     return measurementMgrSM_event((TI_UINT8 *) &(pMeasurementMgr->currentState), 
                                MEASUREMENTMGR_EVENT_CONNECTED, pMeasurementMgr);
 }
@@ -413,8 +375,6 @@ TI_STATUS measurementMgr_disconnected(TI_HANDLE hMeasurementMgr)
 {
     measurementMgr_t * pMeasurementMgr = (measurementMgr_t *) hMeasurementMgr;
 
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MeasurementMgr set to disconnected.\n");
-
     return measurementMgrSM_event((TI_UINT8 *) &(pMeasurementMgr->currentState), 
                                 MEASUREMENTMGR_EVENT_DISCONNECTED, pMeasurementMgr);
 }
@@ -430,8 +390,6 @@ TI_STATUS measurementMgr_disconnected(TI_HANDLE hMeasurementMgr)
 TI_STATUS measurementMgr_enable(TI_HANDLE hMeasurementMgr)
 {
     measurementMgr_t * pMeasurementMgr = (measurementMgr_t *) hMeasurementMgr;
-
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MeasurementMgr set to enabled.\n");
 
     return measurementMgrSM_event((TI_UINT8 *) &(pMeasurementMgr->currentState), 
                                 MEASUREMENTMGR_EVENT_ENABLE, pMeasurementMgr);
@@ -449,8 +407,6 @@ TI_STATUS measurementMgr_enable(TI_HANDLE hMeasurementMgr)
 TI_STATUS measurementMgr_disable(TI_HANDLE hMeasurementMgr)
 {
     measurementMgr_t * pMeasurementMgr = (measurementMgr_t *) hMeasurementMgr;
-
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MeasurementMgr set to disabled.\n");
 
     return measurementMgrSM_event((TI_UINT8 *) &(pMeasurementMgr->currentState), 
                                 MEASUREMENTMGR_EVENT_DISABLE, pMeasurementMgr);
@@ -474,8 +430,6 @@ TI_STATUS measurementMgr_destroy(TI_HANDLE hMeasurementMgr)
 
     if (pMeasurementMgr == NULL)
         return TI_OK;
-
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MeasurementMgr is being destroyed\n");
 
     initVec = 0xFFFF;   /* release everything */
 
@@ -527,8 +481,6 @@ TI_STATUS measurementMgr_setMeasurementMode(TI_HANDLE hMeasurementMgr, TI_UINT16
             pMeasurementMgr->Mode = MSR_MODE_NONE;
         }
 
-
-    TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MeasurementMgr mode changed to: %d\n", pMeasurementMgr->Mode);
     
     return TI_OK;
 }
@@ -565,20 +517,14 @@ TI_STATUS measurementMgr_receiveFrameRequest(TI_HANDLE hMeasurementMgr,
     /* ignore broadcast/multicast request if unicast request is active */
     if (frameType != MSR_FRAME_TYPE_UNICAST && pMeasurementMgr->currentFrameType == MSR_FRAME_TYPE_UNICAST)
     {
-        TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Broadcast/Multicast measurement frame has been ignored\n");
-
         return TI_NOK;
     }
 
     /* ignore broadcast request if multicast request is active */
     if (frameType == MSR_FRAME_TYPE_BROADCAST && pMeasurementMgr->currentFrameType == MSR_FRAME_TYPE_MULTICAST)
     {
-        TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Broadcast measurement frame has been ignored\n");
-        
         return TI_NOK;
     }
-
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Measurement frame received\n");
 
     /* Parsing the Frame Request Header */
     pMeasurementMgr->parserFrameReq(hMeasurementMgr, pData, dataLen, 
@@ -593,12 +539,8 @@ TI_STATUS measurementMgr_receiveFrameRequest(TI_HANDLE hMeasurementMgr,
         os_memoryZero(pMeasurementMgr->hOs, &pMeasurementMgr->newFrameRequest, 
                       sizeof(TMeasurementFrameRequest));
 
-        TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Measurement frame token %d is identical to current frame token - ignoring frame\n", currentFrameToken);
-
         return TI_NOK;
     }
-
-    TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Measurement frame token is %d\n", frame->hdr->dialogToken);
 
     /* Frame is Received for processing */
     return measurementMgrSM_event((TI_UINT8 *) &(pMeasurementMgr->currentState), 
@@ -629,18 +571,9 @@ TI_STATUS measurementMgr_activateNextRequest(TI_HANDLE hMeasurementMgr)
     /* to give the measurementSRV a time frame to perform the measurement operation */
     pMeasurementMgr->currentRequestStartTime = os_timeStampMs(pMeasurementMgr->hOs);
 
-    TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Timer started at %d, we have 20ms to begin measurement...\n", pMeasurementMgr->currentRequestStartTime);
-
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Looking for a valid request\n");
-
     do
     {
         TI_STATUS status;
-
-        if (numOfRequestsInParallel != 0)
-        {
-            TRACE4(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Changing activeRequestID from %d to %d, and numOfWaitingRequests from %d to %d.\n", pRequestH->activeRequestID, pRequestH->activeRequestID + numOfRequestsInParallel, pRequestH->numOfWaitingRequests, pRequestH->numOfWaitingRequests - numOfRequestsInParallel);
-        }
 
         pRequestH->activeRequestID += numOfRequestsInParallel;
         pRequestH->numOfWaitingRequests -= numOfRequestsInParallel;
@@ -658,8 +591,6 @@ TI_STATUS measurementMgr_activateNextRequest(TI_HANDLE hMeasurementMgr)
         /* Checking if there are no waiting requests */
         if (status != TI_OK)
         {
-            TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": There are no waiting requests in the queue\n");
-
             return measurementMgrSM_event((TI_UINT8 *) &(pMeasurementMgr->currentState), 
                                MEASUREMENTMGR_EVENT_SEND_REPORT, pMeasurementMgr);
         }
@@ -673,34 +604,21 @@ TI_STATUS measurementMgr_activateNextRequest(TI_HANDLE hMeasurementMgr)
             (pRequestArr[0]->Type == MSR_TYPE_BEACON_MEASUREMENT) &&
             (pRequestArr[0]->ScanMode == MSR_SCAN_MODE_BEACON_TABLE) )
         {
-            TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Received Beacon Table request, building a report for it and continuing\n");
-
             pMeasurementMgr->buildReport(hMeasurementMgr, *(pRequestArr[0]), NULL);
             valid = TI_FALSE; /* In order to get the next request/s*/
         }
         
     } while (valid == TI_FALSE);
     
-    
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Request(s) for activation:\n");
-
-    for (index = 0; index < numOfRequestsInParallel; index++)
-    {
-        TRACE6(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": \n\nRequest #%d:\n Type: %d\n Measured Channel: %d (Serving Channel: %d)\n Scan Mode: %d\n Duration: %d\n\n", index+1, pRequestArr[index]->Type, pRequestArr[index]->channelNumber, pMeasurementMgr->servingChannelID, pRequestArr[index]->ScanMode, pRequestArr[index]->DurationTime);
-    }
 
     /* Ignore requests if traffic intensity is high */
     if (measurementMgr_isTrafficIntensityHigherThanThreshold(pMeasurementMgr) == TI_TRUE)
     {
-        TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Traffic intensity too high, giving up...\n");
-
         measurementMgr_rejectPendingRequests(pMeasurementMgr, MSR_REJECT_TRAFFIC_INTENSITY_TOO_HIGH);
 
         return measurementMgrSM_event((TI_UINT8 *) &(pMeasurementMgr->currentState), 
                                MEASUREMENTMGR_EVENT_SEND_REPORT, pMeasurementMgr);
     }
-
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Request is Valid, about to start\n");
     
     pMeasurementMgr->measuredChannelID = pRequestArr[0]->channelNumber;
   
@@ -722,8 +640,6 @@ void measurementMgr_rejectPendingRequests(TI_HANDLE hMeasurementMgr, EMeasuremen
     while (requestHandler_getNextReq(pMeasurementMgr->hRequestH, TI_TRUE, 
                 pRequestArr, &numOfRequestsInParallel) == TI_OK)
     {
-        TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Rejecting pending request (activeRequestID = %d)...\n", pRequestH->activeRequestID);
-
         pMeasurementMgr->buildRejectReport(pMeasurementMgr, pRequestArr,
                 numOfRequestsInParallel, rejectReason);
 
@@ -755,8 +671,6 @@ void measurementMgr_MeasurementCompleteCB(TI_HANDLE clientObj, TMeasurementReply
     measurementMgr_t    *pMeasurementMgr = (measurementMgr_t *) clientObj;
     TI_UINT8            index;
 
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Building reports for measurement requests\n");
-
     /* build a report for each measurement request/reply pair */
     for (index = 0; index < msrReply->numberOfTypes; index++)
     {
@@ -784,8 +698,6 @@ void measurementMgr_scrResponseCB(TI_HANDLE hClient, EScrClientRequestStatus req
     measurementMgr_t * pMeasurementMgr = (measurementMgr_t *) hClient;
     measurementMgrSM_Events event;
 
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": SCR callback entered\n");
-
     /* If the SM is in a state where it waits for the CB, status of RUN */
     /* results in the SM asking the measurementSRV to start measurement; */
     /* otherwise we got an ABORT or a PEND reason worse than the one we */
@@ -794,21 +706,10 @@ void measurementMgr_scrResponseCB(TI_HANDLE hClient, EScrClientRequestStatus req
     {
         if (requestStatus == SCR_CRS_RUN)
         {
-            TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Received SCR status RUN, running...\n");
-
             event = MEASUREMENTMGR_EVENT_SCR_RUN;
         }
         else
         {
-            if (requestStatus == SCR_CRS_PEND)
-            {
-                TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Received SCR status PEND with reason %d, aborting...\n", pendReason);
-            }
-            else
-            {
-                TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Received SCR status ABORT/FW_RESET, aborting...\n");
-            }
-
             event = MEASUREMENTMGR_EVENT_ABORT;
         }
     }
@@ -818,14 +719,10 @@ void measurementMgr_scrResponseCB(TI_HANDLE hClient, EScrClientRequestStatus req
 
         if (requestStatus == SCR_CRS_FW_RESET)
         {
-            TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Received SCR status FW_RESET\n");
-
             event = MEASUREMENTMGR_EVENT_FW_RESET;
         }
         else
         {
-        TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MeasurementMgrSM current state is %d (which isn't WAITING_FOR_SCR), aborting...\n", pMeasurementMgr->currentState);
-
         event = MEASUREMENTMGR_EVENT_ABORT;
     }
     }
@@ -854,7 +751,6 @@ void measurementMgr_mlmeResultCB(TI_HANDLE hMeasurementMgr, TMacAddr * bssid, ml
 
 	if (measurementMgrSM_measureInProgress(pMeasurementMgr) == TI_FALSE)
 	{
-		TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION , "measurementMgr_mlmeResultCB: measurement not in progress, return\n");
 		return;
 	}
 
@@ -864,20 +760,13 @@ void measurementMgr_mlmeResultCB(TI_HANDLE hMeasurementMgr, TMacAddr * bssid, ml
     scanCncn_MlmeResultCB */
     if (NULL == bssid)
     {
-        TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION , "measurementMgr_mlmeResultCB: received an empty frame notification from MLME\n");
         return;
     }
 
     if (pMeasurementMgr == NULL || pRxAttr == NULL)
     {
-		if(pMeasurementMgr != NULL)
-		{
-			TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, ": MLME callback called with NULL object\n");
-		}
         return;
     }
-
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MLME callback entered\n");
 
     /* build the scan frame info object */
     tScanFrameInfo.bssId = bssid;
@@ -894,7 +783,6 @@ void measurementMgr_mlmeResultCB(TI_HANDLE hMeasurementMgr, TMacAddr * bssid, ml
     /* update the driver (SME) result table */
     sme_MeansurementScanResult (pMeasurementMgr->hSme, SCAN_CRS_RECEIVED_FRAME, &tScanFrameInfo);
 
-    TRACE8(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": MLME Frame: Subtype = %d, MAC = %x-%x-%x-%x-%x-%x, RSSI = %d\n", frameInfo->subType, (*bssid)[0], (*bssid)[1], (*bssid)[2], (*bssid)[3], (*bssid)[4], (*bssid)[5], pRxAttr->Rssi);
 }
 
 
@@ -963,8 +851,6 @@ static TI_BOOL measurementMgr_isTrafficIntensityHigherThanThreshold(measurementM
     int pcksPerSec;
 
     pcksPerSec = TrafficMonitor_GetFrameBandwidth(pMeasurementMgr->hTrafficMonitor);
-
-    TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": pcksPerSec = %d\n", pcksPerSec);
     
     if (pcksPerSec >= pMeasurementMgr->trafficIntensityThreshold)
         trafficIntensityHigh = TI_TRUE;
@@ -999,41 +885,25 @@ static TI_BOOL  measurementMgr_isRequestValid(TI_HANDLE hMeasurementMgr, Measure
     regulatoryDomain_getParam(pMeasurementMgr->hRegulatoryDomain, &param);
     if ( !param.content.bIsChannelSupprted  )
     {
-        TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Request rejected due to invalid channel\n");
-
         if (pMeasurementMgr->currentFrameType == MSR_FRAME_TYPE_UNICAST)
             pMeasurementMgr->buildRejectReport(pMeasurementMgr, pRequestArr, numOfRequest, 
                                     MSR_REJECT_INVALID_CHANNEL);
 
         return TI_FALSE;
     }
-    else
-    {
-        TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Request channel is Valid\n");
-    }
-    
-    TRACE0(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Starting to check each request:\n");
 
     /* Check Validity of each request */
     for (requestIndex = 0; requestIndex < numOfRequest; requestIndex++)
     {
-        TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Checking request #%d:\n", requestIndex+1);
-
         /* Checking validity of the Request Type */
         if (pMeasurementMgr->isTypeValid(hMeasurementMgr, pRequestArr[requestIndex]->Type, 
                 pRequestArr[requestIndex]->ScanMode) == TI_FALSE)
-        {
-            TRACE2(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Request rejected due to invalid measurement type of request #%d (type = %d)\n", requestIndex+1, pRequestArr[requestIndex]->Type);
-            
+        {   
             if(pMeasurementMgr->currentFrameType == MSR_FRAME_TYPE_UNICAST)
                 pMeasurementMgr->buildRejectReport(pMeasurementMgr, pRequestArr, numOfRequest, 
                                         MSR_REJECT_INVALID_MEASUREMENT_TYPE);
 
             return TI_FALSE;
-        }
-        else
-        {
-            TRACE2(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Measurement type of request #%d is supported (type = %d)\n", requestIndex+1, pRequestArr[requestIndex]->Type);
         }
 
         /* For measurement types different than Beacon Table */
@@ -1051,19 +921,11 @@ static TI_BOOL  measurementMgr_isRequestValid(TI_HANDLE hMeasurementMgr, Measure
                 /* Checking duration doesn't exceed given max duration */
                 if (pRequestArr[requestIndex]->DurationTime > pMeasurementMgr->maxDurationOnNonServingChannel)
                 {
-                    TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Request #%d rejected because duration exceeds maximum duration\n", requestIndex+1);
-
-                    TRACE2(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Duration = %d, MaxDurationOnNonServingChannel = %d\n", pRequestArr[requestIndex]->DurationTime, pMeasurementMgr->maxDurationOnNonServingChannel);
-                
                     if (pMeasurementMgr->currentFrameType == MSR_FRAME_TYPE_UNICAST)
                         pMeasurementMgr->buildRejectReport(pMeasurementMgr, pRequestArr, numOfRequest, 
                                 MSR_REJECT_DURATION_EXCEED_MAX_DURATION);
                 
                     return TI_FALSE;
-                }
-                else
-                {
-                    TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": Duration of request #%d doesn't exceed max duration\n", requestIndex+1);
                 }
 
 
@@ -1082,19 +944,11 @@ static TI_BOOL  measurementMgr_isRequestValid(TI_HANDLE hMeasurementMgr, Measure
                 dtimDuration = beaconInterval * MEASUREMENT_BEACON_INTERVAL_IN_MICRO_SEC/MEASUREMENT_MSEC_IN_MICRO*dtimPeriod;
                 if (pRequestArr[requestIndex]->DurationTime > dtimDuration)
                 {
-                    TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_WARNING, ": Request rejected due to DTIM overlap of request #%d\n", requestIndex+1);
-                                    
-                    TRACE2(pMeasurementMgr->hReport, REPORT_SEVERITY_WARNING, ": Duration = %d, DTIM Duration = %d\n", pRequestArr[requestIndex]->DurationTime, dtimDuration);
-        
                     if (pMeasurementMgr->currentFrameType == MSR_FRAME_TYPE_UNICAST)
                         pMeasurementMgr->buildRejectReport(pMeasurementMgr, pRequestArr, numOfRequest, 
                                                 MSR_REJECT_DTIM_OVERLAP);
 
                     return TI_FALSE;
-                }
-                else
-                {
-                    TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_INFORMATION, ": DTIM of request #%d doesn't overlap\n", requestIndex+1);
                 }
             }
         }

@@ -152,7 +152,6 @@ void scrDebugFunction( TI_HANDLE hScr, TI_UINT32 funcType, void *pParam )
         break;
 
     default:
-        WLAN_OS_REPORT(("Invalid function type in SCR debug function: %d\n", funcType));
         break;
     }
 }
@@ -166,16 +165,6 @@ void scrDebugFunction( TI_HANDLE hScr, TI_UINT32 funcType, void *pParam )
  */
 void printScrDbgFunctions(void)
 {
-    WLAN_OS_REPORT(("   SCR Debug Functions   \n"));
-    WLAN_OS_REPORT(("-------------------------\n"));
-    WLAN_OS_REPORT(("1700 - Print the SCR Debug Help\n"));
-    WLAN_OS_REPORT(("1701 <client> - Request SCR as one shot scan (set client 0-7).\n"));
-    WLAN_OS_REPORT(("1702 <client> - Release SCR as one shot scan (set client 0-7).\n"));
-    WLAN_OS_REPORT(("1703 <client> - Request SCR as periodic scan (set client 0-7).\n"));
-    WLAN_OS_REPORT(("1704 <client> - Release SCR as periodic scan (set client 0-7).\n"));
-    WLAN_OS_REPORT(("1705 - Change SCR group\n"));
-    WLAN_OS_REPORT(("1706 - Print SCR object\n"));
-    WLAN_OS_REPORT(("1707 - Change SCR mode\n"));
 }
 
 /**
@@ -194,9 +183,6 @@ void requestAsClient( TI_HANDLE hScr, EScrClientId client, EScrResourceId eResou
     EScrClientRequestStatus requestStatus;
 
     requestStatus = scr_clientRequest( hScr, client, eResource, &pendReason );
-    WLAN_OS_REPORT(("Resource %s was requested as client %s, result %s, pend reason %s\n",
-                    resourceDesc[ eResource ], clientDesc[ client ], requestStatusDesc[ requestStatus ],
-                    pendReasonDesc[ pendReason ]));
 }
 
 /**
@@ -212,8 +198,6 @@ void requestAsClient( TI_HANDLE hScr, EScrClientId client, EScrResourceId eResou
 void releaseAsClient( TI_HANDLE hScr, EScrClientId client, EScrResourceId eResource )
 {
     scr_clientComplete( hScr, client, eResource );
-    WLAN_OS_REPORT(("Resource %s was released as client %s\n",
-                    resourceDesc[ eResource ], clientDesc[ client ]));
 }
 
 /**
@@ -228,8 +212,6 @@ void releaseAsClient( TI_HANDLE hScr, EScrClientId client, EScrResourceId eResou
 void changeGroup( TI_HANDLE hScr, EScrGroupId group )
 {
     scr_setGroup( hScr, group );
-    WLAN_OS_REPORT(("SCR group was changed to %s\n",
-                    groupDesc[ group ]));
 }
 
 /**
@@ -244,8 +226,6 @@ void changeGroup( TI_HANDLE hScr, EScrGroupId group )
 void changeMode( TI_HANDLE hScr, EScrModeId mode )
 {
     scr_setMode( hScr, mode );
-    WLAN_OS_REPORT(("SCR mode was changed to %s\n",
-                    modeDesc[ mode ]));
 }
 /**
  * \\n
@@ -257,24 +237,4 @@ void changeMode( TI_HANDLE hScr, EScrModeId mode )
  */
 void printSCRObject( TI_HANDLE hScr )
 {
-    TScr* pScr = (TScr*)hScr;
-    int i;
-
-    WLAN_OS_REPORT( ("SCR current group:%s, mode: %s, serving channel owner:%s, periodic scan owner: %s "
-                     "within request:%s\n", 
-                     groupDesc[ pScr->currentGroup ],modeDesc[ pScr->currentMode ],
-                     clientDesc[ pScr->runningClient[ SCR_RESOURCE_SERVING_CHANNEL ] ],
-                     clientDesc[ pScr->runningClient[ SCR_RESOURCE_PERIODIC_SCAN ] ],
-                     (TI_TRUE == pScr->statusNotficationPending ? "Yes" : "No" )) );
-    
-    WLAN_OS_REPORT( ("%-22s %-15s %-15s %-15s %-15s\n", "Client", "State (SC)", "State (PS)", "Pend Reason (SC)", "Pend Reason (PS)") );
-    WLAN_OS_REPORT( ("----------------------------------------------------------------------\n"));
-    for ( i = 0; i < SCR_CID_NUM_OF_CLIENTS; i++ )
-    {
-        WLAN_OS_REPORT( ("%-22s %-15s %-15s %-15s %-15s \n",
-                         clientDesc[ i ], stateDesc[ pScr->clientArray[ i ].state[ SCR_RESOURCE_SERVING_CHANNEL ] ], 
-                         stateDesc[ pScr->clientArray[ i ].state[ SCR_RESOURCE_PERIODIC_SCAN ] ],
-                         pendReasonDesc[ pScr->clientArray[ i ].currentPendingReason[ SCR_RESOURCE_SERVING_CHANNEL ] ],
-                         pendReasonDesc[ pScr->clientArray[ i ].currentPendingReason[ SCR_RESOURCE_PERIODIC_SCAN ] ]) );
-    }
 }

@@ -138,14 +138,6 @@ void FWDebugFunction(TI_HANDLE hDrvMain,
 
 void printFWDbgFunctions(void)
 {
-    WLAN_OS_REPORT(("    FW Debug Functions     	          	\n"));
-    WLAN_OS_REPORT(("---------------------------------------------------\n"));
-    WLAN_OS_REPORT(("2200 		- Print the FW Debug Help		\n"));
-    WLAN_OS_REPORT(("2201 		- Send General Test Command 	\n"));
-    WLAN_OS_REPORT(("2202 		- create IBSS connection   	 	\n"));
-    WLAN_OS_REPORT(("2203[n] 	- Send n<=999 Packets           \n"));
-    WLAN_OS_REPORT(("2205 		- Start LoopBack            	\n"));
-    WLAN_OS_REPORT(("2206 		- Stop LoopBack             	\n"));
 }
 
 

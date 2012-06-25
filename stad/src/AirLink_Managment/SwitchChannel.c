@@ -227,7 +227,6 @@ TI_HANDLE switchChannel_create(TI_HANDLE hOs)
     if (status != TI_OK)
     {
         release_module(pSwitchChannel, initVec);
-        WLAN_OS_REPORT(("FATAL ERROR: switchChannel_create(): Error Creating pSwitchChannelSm - Aborting\n"));
         return NULL;
     }
     initVec |= (1 << SC_SM_INIT_BIT);
@@ -349,7 +348,6 @@ TI_STATUS switchChannel_SetDefaults (TI_HANDLE hSwitchChannel, SwitchChannelInit
     pSwitchChannel->debugChannelSwitchCmdParams.hdr[1] = SC_SWITCH_CHANNEL_CMD_LEN;
     pSwitchChannel->ignoreCancelSwitchChannelCmd = 0;
 #endif
-    TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INIT, ".....SwitchChannel configured successfully\n");
 
     return TI_OK;
 }
@@ -509,7 +507,6 @@ void switchChannel_recvCmd(TI_HANDLE hSwitchChannel, dot11_CHANNEL_SWITCH_t *cha
     } 
     else 
     {   /* SC IE exists */
-        TRACE3(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_recvFrame, SwitchChannel cmd was found, channel no=%d, mode=%d, TBTT=%d \n", channelSwitch->channelNumber, channelSwitch->channelSwitchMode, channelSwitch->channelSwitchCount);
 
         /* Checking channel number validity */
         param.content.channel = channelSwitch->channelNumber;
@@ -520,7 +517,6 @@ void switchChannel_recvCmd(TI_HANDLE hSwitchChannel, dot11_CHANNEL_SWITCH_t *cha
             (channelSwitch->channelSwitchMode == SC_SWITCH_CHANNEL_MODE_TX_SUS))
         {   /* Trigger Roaming, if TX mode is disabled, the new channel number is invalid, 
                 or the TBTT count is 0 */
-            TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "report Roaming trigger\n");
             if (channelSwitch->channelSwitchMode == SC_SWITCH_CHANNEL_MODE_TX_SUS) 
             {
                 param.paramType = REGULATORY_DOMAIN_SET_CHANNEL_VALIDITY;
@@ -571,7 +567,6 @@ void switchChannel_SwitchChannelCmdCompleteReturn(TI_HANDLE hSwitchChannel)
     {
         return;
     }
-    TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_SwitchChannelCmdCompleteReturn \n");
 
     switchChannel_smEvent((TI_UINT8*)&pSwitchChannel->currentState, SC_EVENT_SC_CMPLT, pSwitchChannel);
 
@@ -606,7 +601,6 @@ void switchChannel_enableDisableSpectrumMngmt(TI_HANDLE hSwitchChannel, TI_BOOL 
     {
         return;
     }
-    TRACE1(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_enableDisableSpectrumMngmt, enableDisable=%d \n", enableDisable);
 
     pSwitchChannel->dot11SpectrumManagementRequired = enableDisable;
 
@@ -662,19 +656,11 @@ static TI_STATUS switchChannel_smEvent(TI_UINT8 *currState, TI_UINT8 event, void
     status = fsm_GetNextState(pSwitchChannel->pSwitchChannelSm, *currState, event, &nextState);
     if (status != TI_OK)
     {
-        TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_ERROR, "switchChannel_smEvent, fsm_GetNextState error\n");
         return(TI_NOK);
     }
 
-	TRACE3(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_smEvent: <currentState = %d, event = %d> --> nextState = %d\n", *currState, event, nextState);
-
 	status = fsm_Event(pSwitchChannel->pSwitchChannelSm, currState, event, (void *)pSwitchChannel);
 
-    if (status != TI_OK)
-    {
-        TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_ERROR, "switchChannel_smEvent fsm_Event error\n");
-		TRACE3(pSwitchChannel->hReport, REPORT_SEVERITY_ERROR, "switchChannel_smEvent: <currentState = %d, event = %d> --> nextState = %d\n", *currState, event, nextState);
-    }
     return status;
 
 }
@@ -716,7 +702,6 @@ static TI_STATUS switchChannel_smStart(void *pData)
     siteMgr_getParam(pSwitchChannel->hSiteMgr, &param);
     pSwitchChannel->currentChannel = param.content.siteMgrCurrentChannel;
     
-    TRACE1(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_smStart, channelNo=%d\n", pSwitchChannel->currentChannel);
     return TI_OK;
 
 }
@@ -757,7 +742,6 @@ static TI_STATUS switchChannel_smReqSCR_UpdateCmd(void *pData)
     {
         return TI_NOK;
     }
-    TRACE3(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_smReqSCR_UpdateCmd, channelNo=%d, TBTT = %d, Mode = %d\n", pSwitchChannel->curChannelSwitchCmdParams.channelNumber, pSwitchChannel->curChannelSwitchCmdParams.channelSwitchCount, pSwitchChannel->curChannelSwitchCmdParams.channelSwitchMode);
 
 
     /* Save the TS when requesting SCR */
@@ -767,7 +751,6 @@ static TI_STATUS switchChannel_smReqSCR_UpdateCmd(void *pData)
                                   SCR_RESOURCE_SERVING_CHANNEL, &scrPendReason);
     if ((scrStatus != SCR_CRS_RUN) && (scrStatus != SCR_CRS_PEND))
     {   
-        TRACE1(pSwitchChannel->hReport, REPORT_SEVERITY_ERROR, "switchChannel_smReqSCR_UpdateCmd():Abort the switch channel, request Roaming, scrStatus=%d\n", scrStatus);
         return (switchChannel_smEvent((TI_UINT8*)&pSwitchChannel->currentState, SC_EVENT_SCR_FAIL, pSwitchChannel));
 
     }
@@ -836,7 +819,6 @@ void switchChannel_scrStatusCB(TI_HANDLE hSwitchChannel, EScrClientRequestStatus
         break;
     case SCR_CRS_ABORT: 
     default:
-        TRACE2(pSwitchChannel->hReport, REPORT_SEVERITY_ERROR, "switchChannel_scrStatusCB scrStatus = %d, pendReason=%d\n", requestStatus, pendReason);
         scEvent = SC_EVENT_SCR_FAIL;
         break;
     }
@@ -901,8 +883,6 @@ static TI_STATUS switchChannel_smStartSwitchChannelCmd(void *pData)
     pSwitchChannelCmd.txFlag        = pSwitchChannel->curChannelSwitchCmdParams.channelSwitchMode;
     pSwitchChannelCmd.flush         = 0;
     TWD_CmdSwitchChannel (pSwitchChannel->hTWD, &pSwitchChannelCmd);
-    
-    TRACE4(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "TWD_CmdSwitchChannel:Set the cmd in HAL. Params:\n channelNumber=%d, switchTime=%d, txFlag=%d, flush=%d \n", pSwitchChannelCmd.channelNumber, pSwitchChannelCmd.switchTime, pSwitchChannelCmd.txFlag, pSwitchChannelCmd.flush);
 
     return TI_OK;
 
@@ -939,7 +919,6 @@ static TI_STATUS switchChannel_smFwResetWhileSCInProg(void *pData)
     {
         return TI_NOK;
     }
-    TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_smFwResetWhileSCInProg \n");
 
     /* Update new current channel */
     param.paramType = SITE_MGR_CURRENT_CHANNEL_PARAM;
@@ -996,8 +975,6 @@ static TI_STATUS switchChannel_smSwitchChannelCmplt(void *pData)
     param.content.siteMgrCurrentChannel = pSwitchChannel->curChannelSwitchCmdParams.channelNumber;
     siteMgr_setParam(pSwitchChannel->hSiteMgr, &param);
 
-    TRACE1(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_smSwitchChannelCmplt, new channelNum = %d\n", pSwitchChannel->currentChannel);
-
     apConn_indicateSwitchChannelFinished(pSwitchChannel->hApConn);
     switchChannel_zeroDatabase(pSwitchChannel);
 
@@ -1042,8 +1019,6 @@ static TI_STATUS switchChannel_smScrFailWhileWait4Scr(void *pData)
         return TI_NOK;
     }
 
-    TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_smScrFailWhileWait4Scr\n");
-
     switchChannel_zeroDatabase(pSwitchChannel);
 
     /* release the SCR is not required !!! */
@@ -1086,8 +1061,6 @@ static TI_STATUS switchChannel_smStopWhileWait4Cmd(void *pData)
         return TI_NOK;
     }
 
-    TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_smStopWhileWait4Cmd\n");
-
     switchChannel_zeroDatabase(pSwitchChannel);
     
     return TI_OK;
@@ -1126,8 +1099,6 @@ static TI_STATUS switchChannel_smStopWhileWait4Scr(void *pData)
     {
         return TI_NOK;
     }
-
-    TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_smStopWhileWait4Scr\n");
 
 
     switchChannel_zeroDatabase(pSwitchChannel);
@@ -1174,8 +1145,6 @@ static TI_STATUS switchChannel_smStopWhileSwitchChannelInProg(void *pData)
         return TI_NOK;
     }
 
-    TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_smStopWhileSwitchChannelInProg\n");
-
     /* Exit PS */
     /*PowerMgr_exitFromDriverMode(pSwitchChannel->hPowerMngr, "SwitchChannel");*/
 
@@ -1220,8 +1189,6 @@ static TI_STATUS switchChannel_smStopWhileSwitchChannelInProg(void *pData)
 *************************************************************************/
 static void switchChannel_zeroDatabase(switchChannel_t *pSwitchChannel)
 {
-
-    TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_zeroDatabase\n");
 
 
     pSwitchChannel->curChannelSwitchCmdParams.channelNumber = 0;
@@ -1293,7 +1260,6 @@ static TI_STATUS switchChannel_smNop(void *pData)
     {
         return TI_NOK;
     }
-    TRACE0(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, " switchChannel_smNop\n");
 
     return TI_OK;
 }
@@ -1325,7 +1291,6 @@ static TI_STATUS switchChannel_smUnexpected(void *pData)
     {
         return TI_NOK;
     }
-    TRACE1(pSwitchChannel->hReport, REPORT_SEVERITY_ERROR, " switchChannel_smUnexpected, state = %d\n", pSwitchChannel->currentState);
 
     return TI_NOK;
 }
@@ -1397,7 +1362,6 @@ static void switchChannel_recvCmd4Debug(TI_HANDLE hSwitchChannel, dot11_CHANNEL_
             Switch Cahnnel Announcement IE according to the IE ID */
         
         /* SC IE exists on the serving channel */
-        TRACE3(pSwitchChannel->hReport, REPORT_SEVERITY_INFORMATION, "switchChannel_recvFrame, SwitchChannel cmd was found, channel no=%d, mode=%d, TBTT=%d \n", channelSwitch->channelNumber, channelSwitch->channelSwitchMode, channelSwitch->channelSwitchCount);
 
         /* Checking channel number validity */
         param.content.channel = channelSwitch->channelNumber;
@@ -1434,20 +1398,15 @@ void switchChannelDebug_setCmdParams(TI_HANDLE hSwitchChannel, SC_switchChannelC
     switch (switchChannelCmdParam)
     {
     case SC_SWITCH_CHANNEL_NUM:
-        WLAN_OS_REPORT(("SwitchChannelDebug_setSwitchChannelCmdParams, channelNum=%d \n ", param));
         pSwitchChannel->debugChannelSwitchCmdParams.channelNumber = param;
         break;
     case SC_SWITCH_CHANNEL_TBTT:
-        WLAN_OS_REPORT(("SwitchChannelDebug_setSwitchChannelCmdParams, channelSwitchCount=%d \n ", param));
         pSwitchChannel->debugChannelSwitchCmdParams.channelSwitchCount = param;
         break;
     case SC_SWITCH_CHANNEL_MODE:
-        WLAN_OS_REPORT(("SwitchChannelDebug_setSwitchChannelCmdParams, channelSwitchMode=%d \n ", param));
         pSwitchChannel->debugChannelSwitchCmdParams.channelSwitchMode = param;
         break;
     default:
-        WLAN_OS_REPORT(("ERROR: SwitchChannelDebug_setSwitchChannelCmdParams, wrong switchChannelCmdParam=%d \n ",
-                        switchChannelCmdParam));
             break;
     }
 
@@ -1460,12 +1419,6 @@ void switchChannelDebug_SwitchChannelCmdTest(TI_HANDLE hSwitchChannel, TI_BOOL B
     {
         return;
     }
-    
-    WLAN_OS_REPORT(("SwitchChannelDebug_SwitchChannelCmdTest, BeaconPacket=%d \n cmd params: channelNumber=%d, channelSwitchCount=%d, channelSwitchMode=%d \n",
-                    BeaconPacket,
-                    pSwitchChannel->debugChannelSwitchCmdParams.channelNumber,
-                    pSwitchChannel->debugChannelSwitchCmdParams.channelSwitchCount,
-                    pSwitchChannel->debugChannelSwitchCmdParams.channelSwitchMode));
 
 
     pSwitchChannel->ignoreCancelSwitchChannelCmd= 1;
@@ -1482,7 +1435,6 @@ void switchChannelDebug_CancelSwitchChannelCmdTest(TI_HANDLE hSwitchChannel, TI_
         return;
     }
     
-    WLAN_OS_REPORT(("SwitchChannelDebug_SwitchChannelCmdTest, BeaconPacket=%d \n",BeaconPacket));
 
     pSwitchChannel->ignoreCancelSwitchChannelCmd= 0;
     switchChannel_recvCmd4Debug(hSwitchChannel, NULL, BeaconPacket, pSwitchChannel->currentChannel);
@@ -1497,13 +1449,6 @@ void switchChannelDebug_printStatus(TI_HANDLE hSwitchChannel)
     {
         return;
     }
-    
-    WLAN_OS_REPORT(("SwitchChannel debug params are: channelNumber=%d, channelSwitchCount=%d , channelSwitchMode=%d \n", 
-                    pSwitchChannel->debugChannelSwitchCmdParams.channelNumber, 
-                    pSwitchChannel->debugChannelSwitchCmdParams.channelSwitchCount,
-                    pSwitchChannel->debugChannelSwitchCmdParams.channelSwitchMode));
-
-    WLAN_OS_REPORT(("SwitchChannel state=%d, currentChannel=%d \n", pSwitchChannel->currentState, pSwitchChannel->currentChannel));
 
 
 }

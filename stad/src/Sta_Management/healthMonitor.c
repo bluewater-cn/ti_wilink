@@ -101,24 +101,6 @@ typedef struct
 static void healthMonitor_proccessFailureEvent (TI_HANDLE hHealthMonitor, TI_BOOL bTwdInitOccured);
 
 
-#ifdef REPORT_LOG
-
-static char* sRecoveryTriggersNames [MAX_FAILURE_EVENTS] = 
-{
-    "NO_SCAN_COMPLETE_FAILURE",
-    "MBOX_FAILURE",
-    "HW_AWAKE_FAILURE",
-    "TX_STUCK",
-    "DISCONNECT_TIMEOUT",
-    "POWER_SAVE_FAILURE",
-    "MEASUREMENT_FAILURE",
-    "BUS_FAILURE",
-    "HW_WD_EXPIRE",
-    "RX_XFER_FAILURE"
-};
-#endif
-
-
 /** 
  * \fn     healthMonitor_create 
  * \brief  Create module object
@@ -216,7 +198,6 @@ TI_STATUS healthMonitor_SetDefaults (TI_HANDLE    hHealthMonitor, healthMonitorI
     pHealthMonitor->hFailTimer = tmr_CreateTimer (pHealthMonitor->hTimer);
     if (pHealthMonitor->hFailTimer == NULL)
     {
-        TRACE0(pHealthMonitor->hReport, REPORT_SEVERITY_ERROR, "healthMonitor_SetDefaults(): Failed to create hFailTimer!\n");
 		return TI_NOK;
     }
 
@@ -324,7 +305,6 @@ void healthMonitor_sendFailureEvent (TI_HANDLE hHealthMonitor, EFailureEvent fai
     /* Check the recovery process is already running */
     if (pHealthMonitor->failureEvent < MAX_FAILURE_EVENTS)
     {
-        TRACE0(pHealthMonitor->hReport, REPORT_SEVERITY_WARNING , ": recovery process is already handling , new trigger is \n");
     }
 
     /* Recovery is performed only if this trigger is enabled in the .INI file */
@@ -340,10 +320,6 @@ void healthMonitor_sendFailureEvent (TI_HANDLE hHealthMonitor, EFailureEvent fai
                         (TI_HANDLE)pHealthMonitor,
                         1,
                         TI_FALSE);
-    }
-    else 
-    {
-        TRACE0(pHealthMonitor->hReport, REPORT_SEVERITY_ERROR , ": Recovery trigger  is disabled!\n");
     }
 }
 
@@ -372,26 +348,14 @@ void healthMonitor_proccessFailureEvent (TI_HANDLE hHealthMonitor, TI_BOOL bTwdI
     {
         pHealthMonitor->recoveryTriggersNumber[pHealthMonitor->failureEvent] ++;
 
-        TRACE2(pHealthMonitor->hReport, REPORT_SEVERITY_CONSOLE, "***** recovery trigger: failureEvent =%d *****, ts=%d\n", pHealthMonitor->failureEvent, os_timeStampMs(pHealthMonitor->hOs));
-        WLAN_OS_REPORT (("***** recovery trigger: %s *****, ts=%d\n", sRecoveryTriggersNames[pHealthMonitor->failureEvent], os_timeStampMs(pHealthMonitor->hOs)));
-
         if (TWD_RecoveryEnabled (pHealthMonitor->hTWD))
         {
             pHealthMonitor->numOfRecoveryPerformed ++;
             drvMain_Recovery (pHealthMonitor->hDrvMain);
         }
-        else
-        {
-            TRACE0(pHealthMonitor->hReport, REPORT_SEVERITY_CONSOLE, "healthMonitor_proccessFailureEvent: Recovery is disabled in tiwlan.ini, abort recovery process\n");
-            WLAN_OS_REPORT(("healthMonitor_proccessFailureEvent: Recovery is disabled in tiwlan.ini, abort recovery process\n"));
-        }
 
         pHealthMonitor->failureEvent = (TI_UINT32)NO_FAILURE;
     }
-    else
-    {
-        TRACE1(pHealthMonitor->hReport, REPORT_SEVERITY_ERROR , "unsupported failure event = %d\n", pHealthMonitor->failureEvent);
-    }    
 }
 
 
@@ -408,21 +372,6 @@ RETURN:
 ************************************************************************/
 void healthMonitor_printFailureEvents(TI_HANDLE hHealthMonitor)
 {
-  #ifdef TI_DBG
-    THealthMonitor  *pHealthMonitor = (THealthMonitor*)hHealthMonitor;
-    int i;
-
-    WLAN_OS_REPORT(("-------------- STA Health Failure Statistics ---------------\n"));
-    WLAN_OS_REPORT(("FULL RECOVERY PERFORMED    = %d\n", pHealthMonitor->numOfRecoveryPerformed));
-    for (i = 0; i < MAX_FAILURE_EVENTS; i++)
-    {
-        WLAN_OS_REPORT(("%27s= %d\n", sRecoveryTriggersNames[ i ], pHealthMonitor->recoveryTriggersNumber[ i ]));
-    }
-    WLAN_OS_REPORT(("Maximum number of commands in mailbox queue = %u\n", TWD_GetMaxNumberOfCommandsInQueue(pHealthMonitor->hTWD)));
-    WLAN_OS_REPORT(("Health Test Performed       = %d\n", pHealthMonitor->numOfHealthTests));
-    WLAN_OS_REPORT(("\n"));
-
-  #endif /* TI_DBG */
 }
 
 
@@ -442,8 +391,6 @@ TI_STATUS healthMonitor_SetParam (TI_HANDLE hHealthMonitor, paramInfo_t *pParam)
 {
     THealthMonitor *pHealthMonitor = (THealthMonitor*)hHealthMonitor;
 	TI_STATUS eStatus = TI_OK;
-
-    TRACE1(pHealthMonitor->hReport, REPORT_SEVERITY_INFORMATION, "healthMonitor_SetParam() - %d\n", pParam->paramType);
 	
 	switch(pParam->paramType)
 	{
@@ -456,8 +403,7 @@ TI_STATUS healthMonitor_SetParam (TI_HANDLE hHealthMonitor, paramInfo_t *pParam)
         }
 		break;
 
-	default:
-        TRACE1(pHealthMonitor->hReport, REPORT_SEVERITY_ERROR, "healthMonitor_SetParam(): Params is not supported, %d\n", pParam->paramType);
+	default:{}
 	}
 
 	return eStatus;

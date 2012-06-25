@@ -170,11 +170,8 @@ TI_STATUS auth_osSMEvent(TI_UINT8 *currentState, TI_UINT8 event, TI_HANDLE hAuth
 	status = fsm_GetNextState(pAuth->pAuthSm, *currentState, event, &nextState);
 	if (status != TI_OK)
 	{
-		TRACE0(pAuth->hReport, REPORT_SEVERITY_SM, "State machine error, failed getting next state\n");
 		return(TI_NOK);
 	}
-
-	TRACE3( pAuth->hReport, REPORT_SEVERITY_INFORMATION, "auth_osSMEvent: <currentState = %d, event = %d> --> nextState = %d\n", *currentState, event, nextState);
 
 	status = fsm_Event(pAuth->pAuthSm, currentState, event, (void *)pAuth);
 
@@ -217,7 +214,6 @@ TI_STATUS openAuth_Recv(TI_HANDLE hAuth, mlmeFrameInfo_t *pFrame)
 	if ((authAlgo != AUTH_LEGACY_OPEN_SYSTEM) &&
         (authAlgo != AUTH_LEGACY_RESERVED1))
 	{
-TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "OPEN_AUTH_SM: DEBUG recieved authentication message with wrong algorithm \n");
         rsn_reportAuthFailure(pHandle->hRsn, RSN_AUTH_STATUS_INVALID_TYPE);
         return TI_NOK;
 	}
@@ -226,7 +222,6 @@ TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "OPEN_AUTH_SM: DEBUG recieved authe
     {
         rsn_reportAuthFailure(pHandle->hRsn, RSN_AUTH_STATUS_INVALID_TYPE);
     }
-    TRACE1(pHandle->hReport, REPORT_SEVERITY_SM, "OPEN_AUTH_SM: DEBUG Authentication status is %d \n", pFrame->content.auth.status);
 
 	pHandle->authData.status = pFrame->content.auth.status;
 
@@ -250,28 +245,24 @@ TI_STATUS openAuth_smStartIdle(auth_t *pAuth)
 	status = openAuth_smResetRetry(pAuth);
 	if (TI_OK != status)
     {
-        TRACE0(pAuth->hReport, REPORT_SEVERITY_ERROR, "openAuth_smStartIdle: openAuth_smResetRetry return\n");
         return status;
     }
 
     status = openAuth_smSendAuthReq(pAuth);
     if (TI_OK != status)
     {
-        TRACE0(pAuth->hReport, REPORT_SEVERITY_ERROR, "openAuth_smStartIdle: openAuth_smSendAuthReq return\n");
         return status;
     }
 
     status = openAuth_smStartTimer(pAuth);
     if (TI_OK != status)
     {
-        TRACE0(pAuth->hReport, REPORT_SEVERITY_ERROR, "openAuth_smStartIdle: openAuth_smStartTimer return\n");
         return status;
     }
 
     status = openAuth_smIncRetry(pAuth);
     if (TI_OK != status)
     {
-        TRACE0(pAuth->hReport, REPORT_SEVERITY_ERROR, "openAuth_smStartIdle: openAuth_smIncRetry return\n");
         return status;
     }
 

@@ -85,7 +85,6 @@ TI_HANDLE scanCncn_Create (TI_HANDLE hOS)
     pScanCncn = (TScanCncn*)os_memoryAlloc (hOS, sizeof (TScanCncn));
     if (NULL == pScanCncn)
     {
-        WLAN_OS_REPORT (("scanCncn_Create: Unable to allocate memory for scan concentrator object\n"));
         return NULL;
     }
 
@@ -101,7 +100,6 @@ TI_HANDLE scanCncn_Create (TI_HANDLE hOS)
         pScanCncn->pScanClients[ uIndex ] = scanCncnSm_Create (hOS);
         if (NULL == pScanCncn->pScanClients[ uIndex ])
         {
-            WLAN_OS_REPORT (("scanCncn_Create: Unable to create client %d object\n", uIndex));
             /* free all resources allocated so far */
             scanCncn_Destroy ((TI_HANDLE)pScanCncn);
             return NULL;
@@ -112,7 +110,6 @@ TI_HANDLE scanCncn_Create (TI_HANDLE hOS)
     pScanCncn->hOSScanSm = scanCncnOsSm_Create ((TI_HANDLE)pScanCncn);
     if (NULL == pScanCncn->hOSScanSm)
     {
-        WLAN_OS_REPORT (("scanCncn_Create: Unable to create OS scan SM\n"));
         /* free all resources allocated so far */
         scanCncn_Destroy ((TI_HANDLE)pScanCncn);
         return NULL;
@@ -122,7 +119,6 @@ TI_HANDLE scanCncn_Create (TI_HANDLE hOS)
     pScanCncn->hScanResultTable = scanResultTable_Create (hOS);
     if (NULL == pScanCncn->hScanResultTable)
     {
-        WLAN_OS_REPORT (("scanCncn_Create: Unable to create application scan result table\n"));
         /* free all resources allocated so far */
         scanCncn_Destroy ((TI_HANDLE)pScanCncn);
         return NULL;
@@ -284,8 +280,6 @@ void scanCncn_SwitchToConnected (TI_HANDLE hScanCncn)
 {
     TScanCncn   *pScanCncn = (TScanCncn*)hScanCncn;
 
-    TRACE0(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_SwitchToConnected: Switching to connected state.\n");
-
     /* change connection status to connected */
     pScanCncn->eConnectionStatus = STA_CONNECTED;
 
@@ -305,8 +299,6 @@ void scanCncn_SwitchToConnected (TI_HANDLE hScanCncn)
 void scanCncn_SwitchToNotConnected (TI_HANDLE hScanCncn)
 {
     TScanCncn   *pScanCncn = (TScanCncn*)hScanCncn;
-
-    TRACE0(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_SwitchToNotConnected: Switching to not connected state.\n");
 
     /* change connection status to connected */
     pScanCncn->eConnectionStatus = STA_NOT_CONNECTED;
@@ -328,8 +320,6 @@ void scanCncn_SwitchToIBSS (TI_HANDLE hScanCncn)
 {
     TScanCncn   *pScanCncn = (TScanCncn*)hScanCncn;
 
-    TRACE0(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_SwitchToIBSS: Switching to IBSS state.\n");
-
     /* change connection status to connected */
     pScanCncn->eConnectionStatus = STA_IBSS;
 
@@ -342,8 +332,6 @@ EScanCncnResultStatus scanCncn_Start1ShotScan (TI_HANDLE hScanCncn,
 {
     TScanCncn           *pScanCncn = (TScanCncn*)hScanCncn;
     paramInfo_t         *pParam;
-
-    TRACE1(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_Start1ShotScan: Received scan request from client %d\n", eClient);
 
     pParam = (paramInfo_t *)os_memoryAlloc(pScanCncn->hOS, sizeof(paramInfo_t));
     if (!pParam) {
@@ -379,7 +367,6 @@ EScanCncnResultStatus scanCncn_Start1ShotScan (TI_HANDLE hScanCncn,
     /* if no channels are available for scan, return negative result */
     if (0 == pScanCncn->pScanClients[ eClient ]->uScanParams.tOneShotScanParams.numOfChannels)
     {
-        TRACE0(pScanCncn->hReport, REPORT_SEVERITY_ERROR , "scanCncn_Start1ShotScan: no cahnnels to scan after reg. domain verification, can't scan\n");
         return SCAN_CRS_SCAN_FAILED;
     }
 
@@ -419,8 +406,6 @@ EScanCncnResultStatus scanCncn_Start1ShotScan (TI_HANDLE hScanCncn,
 void scanCncn_StopScan (TI_HANDLE hScanCncn, EScanCncnClient eClient)
 {
     TScanCncn           *pScanCncn = (TScanCncn*)hScanCncn;
-
-    TRACE1( pScanCncn->hReport, REPORT_SEVERITY_INFORMATION, "scanCncn_StopScan: Received stop scan request from client %d\n", eClient);
 
     /*
      * mark that null data should be sent (different from abort, where null dats is not sent
@@ -463,8 +448,6 @@ EScanCncnResultStatus scanCncn_StartPeriodicScan (TI_HANDLE hScanCncn,
 {
     TScanCncn           *pScanCncn = (TScanCncn*)hScanCncn;
 
-    TRACE1(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_startPeriodicScan: Received scan request from client %d\n", eClient);
-
     /* copy scan parameters to local buffer */
     os_memoryCopy (pScanCncn->hOS, &(pScanCncn->pScanClients[ eClient ]->uScanParams.tPeriodicScanParams),
                    pScanParams, sizeof(TPeriodicScanParams));
@@ -475,7 +458,6 @@ EScanCncnResultStatus scanCncn_StartPeriodicScan (TI_HANDLE hScanCncn,
     /* if no channels are available for scan, return negative result */
     if (0 == pScanCncn->pScanClients[ eClient ]->uScanParams.tPeriodicScanParams.uChannelNum)
     {
-        TRACE0(pScanCncn->hReport, REPORT_SEVERITY_ERROR , "scanCncn_StartPeriodicScan: no cahnnels to scan after reg. domain verification, can't scan\n");
         return SCAN_CRS_SCAN_FAILED;
     }
 
@@ -527,8 +509,6 @@ void scanCncn_StopPeriodicScan (TI_HANDLE hScanCncn, EScanCncnClient eClient)
 {
     TScanCncn           *pScanCncn = (TScanCncn*)hScanCncn;
 
-    TRACE1( pScanCncn->hReport, REPORT_SEVERITY_INFORMATION, "scanCncn_StopPeriodicScan: Received stop scan request from client %d\n", eClient);
-
     /* if no previous error has occurred, change the state to stopped */
     if (SCAN_CRS_SCAN_COMPLETE_OK == pScanCncn->pScanClients[ eClient ]->eScanResult)
     {
@@ -573,8 +553,6 @@ void scanCncn_ScanCompleteNotificationCB (TI_HANDLE hScanCncn, EScanResultTag eT
     TScanCncn           *pScanCncn = (TScanCncn*)hScanCncn;
     EScanCncnClient     eClient;
 
-    TRACE6(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_ScanCompleteNotificationCB: tag: %d, result count: %d, SPS status: %d, TSF Error: %d, scan status: %d, PS mode: %d\n", eTag, uResultCount, SPSStatus, bTSFError, scanStatus, PSMode);
-
     /* get the scan client value from the scan tag */
     eClient = SCAN_CLIENT_FROM_TAG (eTag);
 
@@ -600,16 +578,12 @@ void scanCncn_ScanCompleteNotificationCB (TI_HANDLE hScanCncn, EScanResultTag eT
     /* check if all frames had been received */
     if (pScanCncn->pScanClients[ eClient ]->uResultCounter >= pScanCncn->pScanClients[ eClient ]->uResultExpectedNumber)
     {
-        TRACE2(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_ScanCompleteNotificationCB: client %d received %d results, matching scan complete FW indication, sending scan complete event\n", eClient, pScanCncn->pScanClients[ eClient ]->uResultCounter);
-
         /* all frames had been received, send a scan complete event to the client SM */
         genSM_Event (pScanCncn->pScanClients[ eClient ]->hGenSM, SCAN_CNCN_SM_EVENT_SCAN_COMPLETE,
                      (TI_HANDLE)pScanCncn->pScanClients[ eClient ]);
     }
     else
     {
-        TRACE3(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_ScanCompleteNotificationCB: client %d received %d results, FW indicated %d results, waiting for more\n", eClient, pScanCncn->pScanClients[ eClient ]->uResultCounter, pScanCncn->pScanClients[ eClient ]->uResultExpectedNumber);
-
         /* still waiting for some frames, turn on the scan complete pending flag */
         pScanCncn->pScanClients[ eClient ]->bScanCompletePending = TI_TRUE;
     }
@@ -633,8 +607,6 @@ void scanCncn_PeriodicScanReportCB (TI_HANDLE hScanCncn, char* str, TI_UINT32 st
     EScanCncnClient     eClient;
     EScanResultTag      eTag = str[ 1 ];
     TI_UINT32           uResultCount = str[ 0 ];
-
-    TRACE2(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_PeriodicScanReportCB: tag: %d, result count: %d\n", eTag, uResultCount);
 
     /* get the scan client value from the scan tag */
     eClient = SCAN_CLIENT_FROM_TAG (eTag);
@@ -661,8 +633,6 @@ void scanCncn_PeriodicScanCompleteCB (TI_HANDLE hScanCncn, char* str, TI_UINT32 
     EScanResultTag      eTag = str[ 1 ];
     TI_UINT32           uResultCount = str[ 0 ];
 
-    TRACE2(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_PeriodicScanCompleteCB: tag: %d, result count: %d\n", eTag, uResultCount);
-
     /* get the scan client value from the scan tag */
     eClient = SCAN_CLIENT_FROM_TAG (eTag);
 
@@ -672,14 +642,12 @@ void scanCncn_PeriodicScanCompleteCB (TI_HANDLE hScanCncn, char* str, TI_UINT32 
     /* check if all frames had been received */
     if (pScanCncn->pScanClients[ eClient ]->uResultCounter >= pScanCncn->pScanClients[ eClient ]->uResultExpectedNumber)
     {
-        TRACE2(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_PeriodicScanCompleteCB: client %d received %d results, matching scan complete FW indication, sending scan complete event\n", eClient, pScanCncn->pScanClients[ eClient ]->uResultCounter);
         /* all frames had been received, send a scan complete event to the client SM */
         genSM_Event (pScanCncn->pScanClients[ eClient ]->hGenSM, SCAN_CNCN_SM_EVENT_SCAN_COMPLETE,
                      (TI_HANDLE)pScanCncn->pScanClients[ eClient ]);
     }
     else
     {
-        TRACE3(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_PeriodicScanCompleteCB: client %d received %d results, FW indicated %d results, waiting for more\n", eClient, pScanCncn->pScanClients[ eClient ]->uResultCounter, pScanCncn->pScanClients[ eClient ]->uResultExpectedNumber);
         /* still waiting for some frames, turn on the scan complete pending flag */
         pScanCncn->pScanClients[ eClient ]->bScanCompletePending = TI_TRUE;
     }
@@ -719,20 +687,15 @@ void scanCncn_MlmeResultCB (TI_HANDLE hScanCncn, TMacAddr* bssid, mlmeFrameInfo_
      */
     if (NULL == bssid)
     {
-        TRACE0(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_MlmeResultCB: received an empty frame notification from MLME\n");
-
         /* invalid resuilt */
         bValidResult = TI_FALSE;
     }
     /* are results valid so far (TI_TRUE == bValidResult) */
     else
     {
-        TRACE6(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_MlmeResultCB: received frame from BBSID: %02x:%02x:%02x:%02x:%02x:%02x\n", (*bssid)[ 0 ], (*bssid)[ 1 ], (*bssid)[ 2 ], (*bssid)[ 3 ], (*bssid)[ 4 ], (*bssid)[ 5 ]);
-
         /* If SSID IE is missing, discard the frame */
         if (frameInfo->content.iePacket.pSsid == NULL)
         {
-            TRACE6(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_MlmeResultCB: discarding frame from BSSID: %02x:%02x:%02x:%02x:%02x:%02x, because SSID IE is missing!!\n", (*bssid)[ 0 ], (*bssid)[ 1 ], (*bssid)[ 2 ], (*bssid)[ 3 ], (*bssid)[ 4 ], (*bssid)[ 5 ]);
             bValidResult = TI_FALSE;
         }
         /* If SSID length is 0 (hidden SSID)*/
@@ -742,7 +705,6 @@ void scanCncn_MlmeResultCB (TI_HANDLE hScanCncn, TMacAddr* bssid, mlmeFrameInfo_
             if  (!(((SCAN_SCC_APP_ONE_SHOT == eClient) || (SCAN_SCC_APP_PERIODIC == eClient)) &&
 				    pScanCncn->pScanClients[ eClient ]->uScanParams.tOneShotScanParams.desiredSsid.len == 0))
 			{
-				TRACE6(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_MlmeResultCB: discarding frame from BSSID: %02x:%02x:%02x:%02x:%02x:%02x, because SSID is hidden (len=0)\n", (*bssid)[ 0 ], (*bssid)[ 1 ], (*bssid)[ 2 ], (*bssid)[ 3 ], (*bssid)[ 4 ], (*bssid)[ 5 ]);
 				bValidResult = TI_FALSE;
 			}
         }
@@ -763,8 +725,6 @@ void scanCncn_MlmeResultCB (TI_HANDLE hScanCncn, TMacAddr* bssid, mlmeFrameInfo_
                                    pScanCncn->pScanClients[ eClient ]->uScanParams.tOneShotScanParams.desiredSsid.len)) &&
                 pScanCncn->pScanClients[ eClient ]->uScanParams.tOneShotScanParams.scanType != SCAN_TYPE_SPS))
             {
-                TRACE6(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_MlmeResultCB: discarding frame from SSID: , BSSID: %02x:%02x:%02x:%02x:%02x:%02x, because SSID different from desired or from current AP!\n", (*bssid)[ 0 ], (*bssid)[ 1 ], (*bssid)[ 2 ], (*bssid)[ 3 ], (*bssid)[ 4 ], (*bssid)[ 5 ]);
-
                 /* invalid resuilt */
                 bValidResult = TI_FALSE;
             }
@@ -806,8 +766,6 @@ void scanCncn_MlmeResultCB (TI_HANDLE hScanCncn, TMacAddr* bssid, mlmeFrameInfo_
     if((TI_TRUE == pScanCncn->pScanClients[ eClient ]->bScanCompletePending) &&
        (pScanCncn->pScanClients[ eClient ]->uResultCounter == pScanCncn->pScanClients[ eClient ]->uResultExpectedNumber))
     {
-        TRACE1(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_MlmeResultCB: received frame number %d, scan complete pending, sending scan complet event\n", pScanCncn->pScanClients[ eClient ]->uResultCounter);
-
         /* send a scan complete event to the client SM */
         genSM_Event (pScanCncn->pScanClients[ eClient ]->hGenSM, SCAN_CNCN_SM_EVENT_SCAN_COMPLETE,
                      (TI_HANDLE)pScanCncn->pScanClients[ eClient ]);
@@ -830,8 +788,6 @@ void scanCncn_ScrRoamingImmedCB (TI_HANDLE hScanCncn, EScrClientRequestStatus eR
                                  EScrResourceId eResource, EScePendReason ePendReason)
 {
     TScanCncn           *pScanCncn = (TScanCncn*)hScanCncn;
-
-    TRACE3(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_ScrRoamingImmedCB: status: %d, resource: %d pend reason: %d\n", eRequestStatus, eResource, ePendReason);
 
     /* act according to the request staus */
     switch (eRequestStatus)
@@ -869,7 +825,6 @@ void scanCncn_ScrRoamingImmedCB (TI_HANDLE hScanCncn, EScrClientRequestStatus eR
     case SCR_CRS_ABORT:
         /* This should never happen, report error */
     default:
-        TRACE1(pScanCncn->hReport, REPORT_SEVERITY_ERROR , "scanCncn_ScrRoamingImmedCB: Illegal SCR request status: %d.\n", eRequestStatus);
         break;
     }
 }
@@ -890,8 +845,6 @@ void scanCncn_ScrRoamingContCB (TI_HANDLE hScanCncn, EScrClientRequestStatus eRe
                                 EScrResourceId eResource, EScePendReason ePendReason)
 {
     TScanCncn           *pScanCncn = (TScanCncn*)hScanCncn;
-
-    TRACE3(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_ScrRoamingContCB: status: %d, resource: %d pend reason: %d\n", eRequestStatus, eResource, ePendReason);
 
     /* act according to the request staus */
     switch (eRequestStatus)
@@ -941,7 +894,6 @@ void scanCncn_ScrRoamingContCB (TI_HANDLE hScanCncn, EScrClientRequestStatus eRe
         break;
 
     default:
-        TRACE1(pScanCncn->hReport, REPORT_SEVERITY_ERROR , "scanCncn_ScrRoamingContCB: Illegal SCR request status: %d.\n", eRequestStatus);
         break;
     }
 }
@@ -964,8 +916,6 @@ void scanCncn_ScrAppCB (TI_HANDLE hScanCncn, EScrClientRequestStatus eRequestSta
 {
     TScanCncn           *pScanCncn = (TScanCncn*)hScanCncn;
     EScanCncnClient     eClient;
-
-    TRACE3(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_ScrAppCB: status: %d, resource: %d pend reason: %d\n", eRequestStatus, eResource, ePendReason);
 
     /* set client according to SCr resource */
     if (SCR_RESOURCE_PERIODIC_SCAN == eResource)
@@ -1019,7 +969,6 @@ void scanCncn_ScrAppCB (TI_HANDLE hScanCncn, EScrClientRequestStatus eRequestSta
         break;
 
     default:
-        TRACE1(pScanCncn->hReport, REPORT_SEVERITY_ERROR , "scanCncn_ScrAppCB: Illegal SCR request status: %d.\n", eRequestStatus);
         break;
     }
 }
@@ -1040,8 +989,6 @@ void scanCncn_ScrDriverCB (TI_HANDLE hScanCncn, EScrClientRequestStatus eRequest
                            EScrResourceId eResource, EScePendReason ePendReason)
 {
     TScanCncn           *pScanCncn = (TScanCncn*)hScanCncn;
-
-    TRACE3(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_ScrDriverCB: status: %d, resource: %d pend reason: %d\n", eRequestStatus, eResource, ePendReason);
 
     /* act according to the request staus */
     switch (eRequestStatus)
@@ -1077,7 +1024,6 @@ void scanCncn_ScrDriverCB (TI_HANDLE hScanCncn, EScrClientRequestStatus eRequest
     case SCR_CRS_ABORT:
     /* This should never happen, report error */
     default:
-        TRACE1(pScanCncn->hReport, REPORT_SEVERITY_ERROR , "scanCncn_ScrDriverCB: Illegal SCR request status: %d.\n", eRequestStatus);
         break;
     }
 }
@@ -1266,8 +1212,6 @@ void scanCncn_SGconfigureScanParams (TI_HANDLE hScanCncn, TI_BOOL bUseSGParams,
     pScanCncn->uSGprobeRequestPercent   = probeReqPercent;
     pScanCncn->uSGcompensationMaxTime   = SGcompensationMaxTime;
     pScanCncn->uSGcompensationPercent   = SGcompensationPercent;
-
-    TRACE4(pScanCncn->hReport, REPORT_SEVERITY_INFORMATION , "scanCncn_SGconfigureScanParams: bUseSGParams=%d, numOfProbeRequest=%d, compensationMaxTime=%d, SGcompensationPercent=%d\n", pScanCncn->bUseSGParams, pScanCncn->uSGprobeRequestPercent, pScanCncn->uSGcompensationMaxTime, pScanCncn->uSGcompensationPercent);
 }
 
 /**

@@ -143,7 +143,6 @@ TI_HANDLE que_Create (TI_HANDLE hOs, TI_HANDLE hReport, TI_UINT32 uLimit, TI_UIN
 	
 	if (!pQue)
 	{
-		WLAN_OS_REPORT (("Error allocating the Queue Module\n"));
 		return NULL;
 	}
 	
@@ -178,10 +177,6 @@ TI_STATUS que_Destroy (TI_HANDLE hQue)
     TQueue *pQue = (TQueue *)hQue;
 
     /* Alert if the queue is unloaded before it was cleared from items */
-    if (pQue->uCount)
-    {
-        TRACE0(pQue->hReport, REPORT_SEVERITY_INFORMATION, "que_Destroy() Queue Not Empty!!");
-    }
     /* free Queue object */
 	os_memoryFree (pQue->hOs, pQue, sizeof(TQueue));
 	
@@ -241,7 +236,6 @@ TI_STATUS que_Enqueue (TI_HANDLE hQue, TI_HANDLE hItem)
         if (pQueNodeHdr->pNext)
         {
             /* Not an error since we have a case where a timer may expire twice in a row (in TxDataQueue) */
-            TRACE0(pQue->hReport, REPORT_SEVERITY_WARNING, "que_Enqueue(): Trying to enqueue an item that is already enqueued!!");
             return TI_NOK;
         }
 
@@ -254,7 +248,6 @@ TI_STATUS que_Enqueue (TI_HANDLE hQue, TI_HANDLE hItem)
         {
             pQue->uMaxCount = pQue->uCount;
         }
-        TRACE0(pQue->hReport, REPORT_SEVERITY_INFORMATION , "que_Enqueue(): Enqueued Successfully\n");
 #endif
 
         return TI_OK;
@@ -265,7 +258,6 @@ TI_STATUS que_Enqueue (TI_HANDLE hQue, TI_HANDLE hItem)
 	 */
 #ifdef TI_DBG
 	pQue->uOverflow++;
-    TRACE0(pQue->hReport, REPORT_SEVERITY_WARNING , "que_Enqueue(): Queue Overflow\n");
 #endif
 	
 	return TI_NOK;
@@ -307,7 +299,6 @@ TI_HANDLE que_Dequeue (TI_HANDLE hQue)
     }
     
 	/* Queue is empty */
-    TRACE0(pQue->hReport, REPORT_SEVERITY_INFORMATION , "que_Dequeue(): Queue is empty\n");
     return NULL;
 }
 
@@ -340,7 +331,6 @@ TI_STATUS que_Requeue (TI_HANDLE hQue, TI_HANDLE hItem)
         /* Verify that pNext is NULL --> Sanity check that this item is not already linked to a queue */
         if (pQueNodeHdr->pNext)
         {
-            TRACE0(pQue->hReport, REPORT_SEVERITY_ERROR, "que_Requeue(): Trying to Requeue an item that is already enqueued!!");
             return TI_NOK;
         }
 
@@ -351,7 +341,6 @@ TI_STATUS que_Requeue (TI_HANDLE hQue, TI_HANDLE hItem)
 #ifdef TI_DBG
 		if (pQue->uCount > pQue->uMaxCount)
 			pQue->uMaxCount = pQue->uCount;
-TRACE0(pQue->hReport, REPORT_SEVERITY_INFORMATION , "que_Requeue(): Requeued successfully\n");
 #endif
 
 		return TI_OK;
@@ -364,7 +353,6 @@ TRACE0(pQue->hReport, REPORT_SEVERITY_INFORMATION , "que_Requeue(): Requeued suc
 	 */
 #ifdef TI_DBG
     pQue->uOverflow++;
-    TRACE0(pQue->hReport, REPORT_SEVERITY_ERROR , "que_Requeue(): Queue Overflow\n");
 #endif
     
     return TI_NOK;
@@ -406,11 +394,6 @@ TI_UINT32 que_Size (TI_HANDLE hQue)
 
 void que_Print(TI_HANDLE hQue)
 {
-	TQueue *pQue = (TQueue *)hQue;
-
-    WLAN_OS_REPORT(("que_Print: Count=%u MaxCount=%u Limit=%u Overflow=%u NodeHeaderOffset=%u Next=0x%x Prev=0x%x\n",
-                    pQue->uCount, pQue->uMaxCount, pQue->uLimit, pQue->uOverflow, 
-                    pQue->uNodeHeaderOffset, pQue->tHead.pNext, pQue->tHead.pPrev));
 }
 
 #endif /* TI_DBG */

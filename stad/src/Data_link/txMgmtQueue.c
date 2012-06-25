@@ -178,7 +178,6 @@ TI_HANDLE txMgmtQ_Create (TI_HANDLE hOs)
 
     if(!pTxMgmtQ)
 	{
-        WLAN_OS_REPORT(("Error allocating the TxMgmtQueue Module\n"));
 		return NULL;
 	}
 
@@ -231,8 +230,6 @@ void txMgmtQ_Init (TStadHandlesList *pStadHandles)
 		/* If any Queues' allocation failed, print error, free TxMgmtQueue module and exit */
 		if (pTxMgmtQ->aQueues[uQueId] == NULL)
 		{
-            TRACE0(pTxMgmtQ->hReport, REPORT_SEVERITY_CONSOLE , "Failed to create queue\n");
-			WLAN_OS_REPORT(("Failed to create queue\n"));
 			os_memoryFree (pTxMgmtQ->hOs, pTxMgmtQ, sizeof(TTxMgmtQ));
 			return;
 		}
@@ -248,8 +245,6 @@ void txMgmtQ_Init (TStadHandlesList *pStadHandles)
                                                    TI_TRUE,
                                                    "TX_MGMT",
                                                    sizeof("TX_MGMT"));
-
-TRACE0(pTxMgmtQ->hReport, REPORT_SEVERITY_INIT, ".....Tx Mgmt Queue configured successfully\n");
 }
 
 
@@ -278,8 +273,6 @@ TI_STATUS txMgmtQ_Destroy (TI_HANDLE hTxMgmtQ)
     {
         if (que_Destroy(pTxMgmtQ->aQueues[uQueId]) != TI_OK)
 		{
-TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_ERROR, "txMgmtQueue_unLoad: fail to free Mgmt Queue number: %d\n",uQueId);
-
 			eStatus = TI_NOK;
 		}
     }
@@ -550,8 +543,7 @@ void txMgmtQ_SetConnState (TI_HANDLE hTxMgmtQ, ETxConnState eTxConnState)
 		case TX_CONN_STATE_EAPOL:	mgmtQueuesSM(pTxMgmtQ, SM_EVENT_EAPOL);		break;
 		case TX_CONN_STATE_OPEN:	mgmtQueuesSM(pTxMgmtQ, SM_EVENT_OPEN);		break;
 
-		default:
-TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_ERROR, ": Unknown eTxConnState = %d\n", eTxConnState);
+		default:{}
 	}
 }
 
@@ -619,7 +611,6 @@ static void mgmtQueuesSM (TTxMgmtQ *pTxMgmtQ, ESmEvent eSmEvent)
 			 */
 			if ( (ePrevState != SM_STATE_CLOSE) && (ePrevState != SM_STATE_MGMT) )
 			{
-TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_ERROR, "mgmtQueuesSM: Got SmEvent=EAPOL when eSmState=%d\n", ePrevState);
 			}
 			pTxMgmtQ->eSmState = SM_STATE_EAPOL;
 			pTxMgmtQ->aQueueEnabledBySM[QUEUE_TYPE_MGMT]  = TI_TRUE;
@@ -634,7 +625,6 @@ TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_ERROR, "mgmtQueuesSM: Got SmEvent=EAPO
 			 */
 			if (ePrevState != SM_STATE_EAPOL)
 			{
-TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_ERROR, "mgmtQueuesSM: Got SmEvent=OPEN when eSmState=%d\n", ePrevState);
 			}
 			if ( ARE_ALL_MGMT_QUEUES_EMPTY(pTxMgmtQ->aQueues) )
 			{
@@ -664,7 +654,6 @@ TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_ERROR, "mgmtQueuesSM: Got SmEvent=OPEN
 			else
 			{
 				/* This may happen so it's just a warning and not an error. */
-TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_WARNING, "mgmtQueuesSM: Got SmEvent=QUEUES_EMPTY when eSmState=%d\n", ePrevState);
 			}
 			break;
 
@@ -697,16 +686,12 @@ TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_WARNING, "mgmtQueuesSM: Got SmEvent=QU
 			else
 			{
 				/* This may happen so it's just a warning and not an error. */
-TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_WARNING, "mgmtQueuesSM: Got SmEvent=QUEUES_NOT_EMPTY when eSmState=%d\n", ePrevState);
 			}
 			break;
 
 		default:
-TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_ERROR, "mgmtQueuesSM: Unknown SmEvent = %d\n", eSmEvent);
 			break;
 	}
-
-TRACE6( pTxMgmtQ->hReport, REPORT_SEVERITY_INFORMATION, "mgmtQueuesSM: <currentState = %d, event = %d> --> nextState = %d, action = %d, MgmtQueEnbl=%d, EapolQueEnbl=%d\n", ePrevState, eSmEvent, pTxMgmtQ->eSmState, eSmAction, pTxMgmtQ->aQueueEnabledBySM[0], pTxMgmtQ->aQueueEnabledBySM[1]);
 
 	/* 
 	 * Execute the required action. 
@@ -730,7 +715,6 @@ TRACE6( pTxMgmtQ->hReport, REPORT_SEVERITY_INFORMATION, "mgmtQueuesSM: <currentS
 			break;
 
 		default:
-TRACE1(pTxMgmtQ->hReport, REPORT_SEVERITY_ERROR, ": Unknown SmAction = %d\n", eSmAction);
 			break;
 	}
 }
@@ -908,35 +892,12 @@ void txMgmtQ_PrintModuleParams (TI_HANDLE hTxMgmtQ)
 {
 	TTxMgmtQ *pTxMgmtQ = (TTxMgmtQ *)hTxMgmtQ;
 	TI_UINT32 uQueId;
-	
-	WLAN_OS_REPORT(("-------------- txMgmtQueue Module Params -----------------\n"));
-	WLAN_OS_REPORT(("==========================================================\n"));
-	
-	WLAN_OS_REPORT(("eSmState        = %d\n", pTxMgmtQ->eSmState));
-	WLAN_OS_REPORT(("bMgmtPortEnable = %d\n", pTxMgmtQ->bMgmtPortEnable));
-	WLAN_OS_REPORT(("eTxConnState    = %d\n", pTxMgmtQ->eTxConnState));
-	WLAN_OS_REPORT(("uContextId      = %d\n", pTxMgmtQ->uContextId));
 
-	WLAN_OS_REPORT(("-------------- Queues Busy (in HW) -----------------------\n"));
 	for(uQueId = 0; uQueId < NUM_OF_MGMT_QUEUES; uQueId++)
     {
-        WLAN_OS_REPORT(("Que[%d]:  %d\n", uQueId, pTxMgmtQ->aQueueBusy[uQueId]));
-    }
-
-	WLAN_OS_REPORT(("-------------- Queues Enabled By SM ----------------------\n"));
-	for(uQueId = 0; uQueId < NUM_OF_MGMT_QUEUES; uQueId++)
-    {
-        WLAN_OS_REPORT(("Que[%d]:  %d\n", uQueId, pTxMgmtQ->aQueueBusy[uQueId]));
-    }
-
-	WLAN_OS_REPORT(("-------------- Queues Info -------------------------------\n"));
-	for(uQueId = 0; uQueId < NUM_OF_MGMT_QUEUES; uQueId++)
-    {
-        WLAN_OS_REPORT(("Que %d:\n", uQueId));
         que_Print (pTxMgmtQ->aQueues[uQueId]);
     }
 
-	WLAN_OS_REPORT(("==========================================================\n\n"));
 }
 
 
@@ -953,33 +914,6 @@ void txMgmtQ_PrintModuleParams (TI_HANDLE hTxMgmtQ)
  */ 
 void txMgmtQ_PrintQueueStatistics (TI_HANDLE hTxMgmtQ)
 {
-	TTxMgmtQ *pTxMgmtQ = (TTxMgmtQ *)hTxMgmtQ;
-	TI_UINT32 uQueId;
-
-	WLAN_OS_REPORT(("-------------- Mgmt Queues Statistics  -------------------\n"));
-	WLAN_OS_REPORT(("==========================================================\n"));
-
-	WLAN_OS_REPORT(("-------------- Enqueue Packets ---------------------------\n"));
-    for(uQueId = 0; uQueId < NUM_OF_MGMT_QUEUES; uQueId++)
-        WLAN_OS_REPORT(("Que[%d]:  %d\n", uQueId, pTxMgmtQ->tDbgCounters.aEnqueuePackets[uQueId]));
-	
-	WLAN_OS_REPORT(("-------------- Dequeue Packets ---------------------------\n"));
-    for(uQueId = 0; uQueId < NUM_OF_MGMT_QUEUES; uQueId++)
-        WLAN_OS_REPORT(("Que[%d]:  %d\n", uQueId, pTxMgmtQ->tDbgCounters.aDequeuePackets[uQueId]));
-
-	WLAN_OS_REPORT(("-------------- Requeue Packets ---------------------------\n"));
-    for(uQueId = 0; uQueId < NUM_OF_MGMT_QUEUES; uQueId++)
-        WLAN_OS_REPORT(("Que[%d]:  %d\n", uQueId, pTxMgmtQ->tDbgCounters.aRequeuePackets[uQueId]));
-
-	WLAN_OS_REPORT(("-------------- Xmitted Packets ---------------------------\n"));
-    for(uQueId = 0; uQueId < NUM_OF_MGMT_QUEUES; uQueId++)
-        WLAN_OS_REPORT(("Que[%d]:  %d\n", uQueId, pTxMgmtQ->tDbgCounters.aXmittedPackets[uQueId]));
-
-	WLAN_OS_REPORT(("-------------- Dropped Packets (queue full) --------------\n"));
-    for(uQueId = 0; uQueId < NUM_OF_MGMT_QUEUES; uQueId++)
-        WLAN_OS_REPORT(("Que[%d]:  %d\n", uQueId, pTxMgmtQ->tDbgCounters.aDroppedPackets[uQueId]));
-
-	WLAN_OS_REPORT(("==========================================================\n\n"));
 }
 
 

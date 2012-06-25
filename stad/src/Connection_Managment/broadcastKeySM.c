@@ -141,15 +141,11 @@ TI_STATUS broadcastKey_unload(struct _broadcastKey_t *pBroadcastKey)
                     
 	if (status != TI_OK)
 	{
-        TRACE0(pBroadcastKey->hReport, REPORT_SEVERITY_CONSOLE, "BCAST_KEY_SM: Error in unloading key derivation module\n");
-		WLAN_OS_REPORT(("BCAST_KEY_SM: Error in unloading key derivation module\n"));
 	}
 
 	status = fsm_Unload(pBroadcastKey->hOs, pBroadcastKey->pBcastKeySm);
 	if (status != TI_OK)
 	{
-        TRACE0(pBroadcastKey->hReport, REPORT_SEVERITY_CONSOLE, "BCAST_KEY_SM: Error in unloading state machine\n");
-		WLAN_OS_REPORT(("BCAST_KEY_SM: Error in unloading state machine\n"));
 	}
 
 	/* free key parser context memory */
@@ -215,8 +211,6 @@ TI_STATUS broadcastKey_config(struct _broadcastKey_t *pBroadcastKey,
 
 TI_STATUS broadcastKeySmUnexpected(struct _broadcastKey_t *pBroadcastKey)
 {
-TRACE0(pBroadcastKey->hReport, REPORT_SEVERITY_ERROR, "BROADCAST_KEY_SM: ERROR: UnExpected Event\n");
-
 	return(TI_NOK);
 }
 

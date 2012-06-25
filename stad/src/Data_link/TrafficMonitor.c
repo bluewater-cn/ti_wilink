@@ -233,7 +233,6 @@ TI_STATUS TrafficMonitor_Stop(TI_HANDLE hTrafficMonitor)
         pTrafficMonitor->Active = TI_FALSE;  
    
         if (pTrafficMonitor->DownTimerEnabled) {
-            // WLAN_OS_REPORT(("Tiwlan: release wake lock due to TrafficMonitor_Stop\n"));
             os_wake_unlock(pTrafficMonitor->hOs);
         }
 
@@ -471,7 +470,6 @@ static TI_STATUS TrafficMonitor_SetMask(TrafficMonitor_t *TrafficMonitor,Traffic
         TrafficAlertElement->ActionFunc = SimpleFrameAggregation;
     break;
    default:
-        WLAN_OS_REPORT(("TrafficMonitor_SetMask - unknown parameter: %d\n", MaskType));
        return TI_NOK;
    }
  
@@ -1198,13 +1196,11 @@ static void TrafficMonitor_ChangeDownTimerStatus (TI_HANDLE hTrafficMonitor, TI_
     {
         pTrafficMonitor->DownTimerEnabled = TI_FALSE;
         tmr_StopTimer (pTrafficMonitor->hTrafficMonTimer);
-        // WLAN_OS_REPORT(("Tiwlan: release wake lock for traffice monitor\n"));
         os_wake_unlock(pTrafficMonitor->hOs);
     }
     else if ((downEventsFound > 0) && (pTrafficMonitor->DownTimerEnabled == TI_FALSE))
     {
         os_wake_lock(pTrafficMonitor->hOs);
-        // WLAN_OS_REPORT(("Tiwlan:  wake lock for traffice monitor\n"));
         pTrafficMonitor->DownTimerEnabled = TI_TRUE;
         /* Start the timer with user defined percentage of the the minimum interval discovered earlier */
         tmr_StartTimer (pTrafficMonitor->hTrafficMonTimer,
@@ -1253,17 +1249,13 @@ void func1(TI_HANDLE Context,TI_UINT32 Cookie)
 {
     switch(Cookie) {
     case 1:
-                WLAN_OS_REPORT(("TRAFF - ALERT UP limit - 50 ON"));
         break;
     case 2:
-                WLAN_OS_REPORT(("TRAFF - ALERT UP limit - 30 ON"));
-    break;
+    	 break;
     case 3:
-                WLAN_OS_REPORT(("TRAFF - ALERT DOWN limit - 25 ON"));  
-    break;
+    	 break;
     case 4:
-                WLAN_OS_REPORT(("TRAFF - ALERT DOWN limit - 10 ON"));  
-    break;
+		 break;
    }
     
 }
@@ -1276,13 +1268,7 @@ void PrintElertStus()
       
     /* go over all the Down elements and check for alert ResetElment that ref to TrafficAlertElement*/    
     while(AlertElement)
-    {
-        if(AlertElement->CurrentState == ALERT_WAIT_FOR_RESET)
-            WLAN_OS_REPORT(("TRAFF - ALERT ALERT_WAIT_FOR_RESET"));
-        else
-            WLAN_OS_REPORT(("TRAFF - ALERT ENABLED"));
-
-            
+    {  
         AlertElement = (TrafficAlertElement_t*)List_GetNext(TrafficMonitor->NotificationRegList);
     } 
 }

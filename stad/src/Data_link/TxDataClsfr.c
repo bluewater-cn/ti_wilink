@@ -97,7 +97,6 @@ TI_STATUS txDataClsfr_Config (TI_HANDLE hTxDataQ, TClsfrParams *pClsfrInitParams
                    /* Detect both duplicate and conflicting entries */
                     if (pParams->ClsfrTable[j].Dscp.CodePoint == pClsfrInitParams->ClsfrTable[i].Dscp.CodePoint)
                     {
-                        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_WARNING , "ERROR: txDataClsfr_Config(): duplicate/conflicting classifier entries\n");
                         bConflictFound = TI_TRUE;
                     }
                 }
@@ -122,7 +121,6 @@ TI_STATUS txDataClsfr_Config (TI_HANDLE hTxDataQ, TClsfrParams *pClsfrInitParams
                     /* Detect both duplicate and conflicting entries */
                     if (pParams->ClsfrTable[j].Dscp.DstPortNum == pClsfrInitParams->ClsfrTable[i].Dscp.DstPortNum)
                     {
-                        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_WARNING , "ERROR: txDataClsfr_Config(): classifier entries conflict\n");
                         bConflictFound = TI_TRUE;
                     }
                 }
@@ -148,7 +146,6 @@ TI_STATUS txDataClsfr_Config (TI_HANDLE hTxDataQ, TClsfrParams *pClsfrInitParams
                     if ((pParams->ClsfrTable[j].Dscp.DstIPPort.DstIPAddress == pClsfrInitParams->ClsfrTable[i].Dscp.DstIPPort.DstIPAddress)&& 
                     (pParams->ClsfrTable[j].Dscp.DstIPPort.DstPortNum == pClsfrInitParams->ClsfrTable[i].Dscp.DstIPPort.DstPortNum))
                     {
-                        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_WARNING , "ERROR: txDataClsfr_Config(): classifier entries conflict\n");
                         bConflictFound = TI_TRUE;
                     }
                 }
@@ -164,7 +161,6 @@ TI_STATUS txDataClsfr_Config (TI_HANDLE hTxDataQ, TClsfrParams *pClsfrInitParams
         break;  
 
         default:
-            TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_WARNING , "ERROR: txDataClsfr_Config(): Classifier type -- unknown --> set to D-Tag\n");
             pParams->eClsfrType = D_TAG_CLSFR;
 			pParams->uNumActiveEntries = 0;
         break;  
@@ -199,7 +195,6 @@ static inline TI_STATUS getIpAndUdpHeader(TTxDataQ   *pTxDataQ,
 	/* check if frame is IP according to ether type */
     if( ( HTOWLANS(((TEthernetHeader *)pEthHead)->type) ) != ETHERTYPE_IP)
     {
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_INFORMATION, " getIpAndUdpHeader: EthTypeLength is not 0x0800 \n");
         return TI_NOK;
     }
 
@@ -259,18 +254,15 @@ TI_STATUS txDataClsfr_ClassifyTxPacket (TI_HANDLE hTxDataQ, TTxCtrlBlk *pPktCtrl
         case D_TAG_CLSFR:
             if (uPacketDtag > MAX_NUM_OF_802_1d_TAGS)
             {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR , "txDataClsfr_ClassifyTxPacket(): uPacketDtag error\n");
                 return PARAM_VALUE_NOT_VALID;
             }
             pPktCtrlBlk->tTxDescriptor.tid = uPacketDtag;
-            TRACE1(pTxDataQ->hReport, REPORT_SEVERITY_INFORMATION , "Classifier D_TAG_CLSFR. uPacketDtag = %d\n", uPacketDtag);
         break;
 
         case DSCP_CLSFR:
             if( (getIpAndUdpHeader(pTxDataQ, pPktCtrlBlk, &pIpHeader, &pUdpHeader) != TI_OK) 
                 || (pIpHeader == NULL) )
             {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_INFORMATION , "txDataClsfr_ClassifyTxPacket(): DSCP clsfr, getIpAndUdpHeader mismatch\n");
 				return PARAM_VALUE_NOT_VALID; 
             }
 
@@ -284,7 +276,6 @@ TI_STATUS txDataClsfr_ClassifyTxPacket (TI_HANDLE hTxDataQ, TTxCtrlBlk *pPktCtrl
                 if (pClsfrParams->ClsfrTable[i].Dscp.CodePoint == uDscp)
 				{
                     pPktCtrlBlk->tTxDescriptor.tid = pClsfrParams->ClsfrTable[i].DTag;
-                    TRACE2(pTxDataQ->hReport, REPORT_SEVERITY_INFORMATION , "Classifier DSCP_CLSFR found match - entry %d - Tid = %d\n",i,pPktCtrlBlk->tTxDescriptor.tid);
 					break;
 				}
             }
@@ -294,7 +285,6 @@ TI_STATUS txDataClsfr_ClassifyTxPacket (TI_HANDLE hTxDataQ, TTxCtrlBlk *pPktCtrl
             if( (getIpAndUdpHeader(pTxDataQ, pPktCtrlBlk, &pIpHeader, &pUdpHeader) != TI_OK) ||
                 (pUdpHeader == NULL) )
             {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_INFORMATION, " txDataClsfr_ClassifyTxPacket() : DstPort clsfr, getIpAndUdpHeader error\n");
                 return PARAM_VALUE_NOT_VALID; 
             }
 
@@ -307,7 +297,6 @@ TI_STATUS txDataClsfr_ClassifyTxPacket (TI_HANDLE hTxDataQ, TTxCtrlBlk *pPktCtrl
                 if (pClsfrParams->ClsfrTable[i].Dscp.DstPortNum == uDstUdpPort)
 				{
                     pPktCtrlBlk->tTxDescriptor.tid = pClsfrParams->ClsfrTable[i].DTag;
-                    TRACE2(pTxDataQ->hReport, REPORT_SEVERITY_INFORMATION , "Classifier PORT_CLSFR found match - entry %d - Tid = %d\n", i, pPktCtrlBlk->tTxDescriptor.tid);
 					break;
 				}
             }
@@ -317,7 +306,6 @@ TI_STATUS txDataClsfr_ClassifyTxPacket (TI_HANDLE hTxDataQ, TTxCtrlBlk *pPktCtrl
             if ( (getIpAndUdpHeader(pTxDataQ, pPktCtrlBlk, &pIpHeader, &pUdpHeader) != TI_OK) 
                  || (pIpHeader == NULL) || (pUdpHeader == NULL) )
             {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_INFORMATION, "txDataClsfr_ClassifyTxPacket(): Dst IP&Port clsfr, getIpAndUdpHeader error\n");
                 return PARAM_VALUE_NOT_VALID; 
             }
 
@@ -335,14 +323,12 @@ TI_STATUS txDataClsfr_ClassifyTxPacket (TI_HANDLE hTxDataQ, TTxCtrlBlk *pPktCtrl
                     (pClsfrParams->ClsfrTable[i].Dscp.DstIPPort.DstPortNum == uDstUdpPort))
 				{
                     pPktCtrlBlk->tTxDescriptor.tid = pClsfrParams->ClsfrTable[i].DTag;
-                    TRACE2(pTxDataQ->hReport, REPORT_SEVERITY_INFORMATION , "Classifier IPPORT_CLSFR found match - entry %d - Tid = %d\n", i, pPktCtrlBlk->tTxDescriptor.tid);
 					break;
 				}
             }
         break;
         
-        default:
-            TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "txDataClsfr_ClassifyTxPacket(): eClsfrType error\n");
+        default:{}
     }
 
     return TI_OK;
@@ -370,20 +356,17 @@ TI_STATUS txDataClsfr_InsertClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pNe
 
 	if(pNewEntry == NULL)
     {
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): NULL ConfigBuffer pointer Error - Aborting\n");
 		return PARAM_VALUE_NOT_VALID;
     }
     
     /* If no available entries, exit */
     if (pClsfrParams->uNumActiveEntries == NUM_OF_CLSFR_TABLE_ENTRIES)
     {
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): Bad Number Of Entries - Aborting\n");
         return PARAM_VALUE_NOT_VALID;
     }
     
     if (pClsfrParams->eClsfrType == D_TAG_CLSFR)
     {
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): D-Tag classifier - Aborting\n");
         return PARAM_VALUE_NOT_VALID;
     }
 
@@ -396,7 +379,6 @@ TI_STATUS txDataClsfr_InsertClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pNe
             if ( (pNewEntry->Dscp.CodePoint > CLASSIFIER_CODE_POINT_MAX) || 
                  (pNewEntry->DTag > CLASSIFIER_DTAG_MAX) ) 
             {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): bad parameter - Aborting\n");
                 return PARAM_VALUE_NOT_VALID;
             }
             
@@ -406,7 +388,6 @@ TI_STATUS txDataClsfr_InsertClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pNe
                /* Detect both duplicate and conflicting entries */
                 if (pClsfrParams->ClsfrTable[i].Dscp.CodePoint == pNewEntry->Dscp.CodePoint)
                 {
-                    TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): classifier entries conflict - Aborting\n");
                     return PARAM_VALUE_NOT_VALID;
                 }
             } 
@@ -427,7 +408,6 @@ TI_STATUS txDataClsfr_InsertClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pNe
                 (pNewEntry->Dscp.DstPortNum > CLASSIFIER_PORT_MAX-1) || 
                 (pNewEntry->Dscp.DstPortNum < CLASSIFIER_PORT_MIN) )
             {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): bad parameter - Aborting\n");
                 return PARAM_VALUE_NOT_VALID;
             }
             
@@ -437,7 +417,6 @@ TI_STATUS txDataClsfr_InsertClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pNe
                /* Detect both duplicate and conflicting entries */
                 if ((pClsfrParams->ClsfrTable[i].Dscp.DstPortNum == pNewEntry->Dscp.DstPortNum))
                 {
-                    TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): classifier entries conflict - Aborting\n");
                      return PARAM_VALUE_NOT_VALID;
                 }
             }     
@@ -460,7 +439,6 @@ TI_STATUS txDataClsfr_InsertClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pNe
                  (pNewEntry->Dscp.DstIPPort.DstIPAddress > CLASSIFIER_IPADDRESS_MAX-1) || 
                  (pNewEntry->Dscp.DstIPPort.DstIPAddress < CLASSIFIER_IPADDRESS_MIN+1) )
             {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): bad parameter - Aborting\n");
                 return PARAM_VALUE_NOT_VALID;
             }
 
@@ -471,7 +449,6 @@ TI_STATUS txDataClsfr_InsertClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pNe
                 if ( (pClsfrParams->ClsfrTable[i].Dscp.DstIPPort.DstIPAddress == pNewEntry->Dscp.DstIPPort.DstIPAddress) && 
                      (pClsfrParams->ClsfrTable[i].Dscp.DstIPPort.DstPortNum == pNewEntry->Dscp.DstIPPort.DstPortNum))
                 {
-                    TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): classifier entries conflict - Aborting\n");
                      return PARAM_VALUE_NOT_VALID;
                 }
             }  
@@ -486,8 +463,7 @@ TI_STATUS txDataClsfr_InsertClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pNe
 
         break;
 
-        default:
-TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): Classifier type -- unknown - Aborting\n");
+        default:{}
             
     } 
     
@@ -518,19 +494,16 @@ TI_STATUS txDataClsfr_RemoveClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pRe
 
 	if(pRemEntry == NULL)
     {
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "classifier_RemoveClsfrEntry(): NULL ConfigBuffer pointer Error - Aborting\n");
 		return PARAM_VALUE_NOT_VALID;
     }
     
     if (pClsfrParams->uNumActiveEntries == 0)
     {
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "classifier_RemoveClsfrEntry(): Classifier table is empty - Aborting\n");
 		return PARAM_VALUE_NOT_VALID;
     }
    
     if (pClsfrParams->eClsfrType == D_TAG_CLSFR)
     {
-        TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "classifier_RemoveClsfrEntry(): D-Tag classifier - Aborting\n");
         return PARAM_VALUE_NOT_VALID;
     }
 
@@ -553,7 +526,6 @@ TI_STATUS txDataClsfr_RemoveClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pRe
            /* If we have reached the number of active entries, it means we couldn't find the requested entry */
             if (i == pClsfrParams->uNumActiveEntries)
            {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "classifier_RemoveClsfrEntry(): Entry not found - Aborting\n");
                return PARAM_VALUE_NOT_VALID;
            }
 
@@ -584,7 +556,6 @@ TI_STATUS txDataClsfr_RemoveClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pRe
            /* If we have reached the number of active entries, it means we couldn't find the requested entry */
             if (i == pClsfrParams->uNumActiveEntries)
            {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "classifier_RemoveClsfrEntry(): Entry not found - Aborting\n");
                return PARAM_VALUE_NOT_VALID;
            }
 
@@ -615,7 +586,6 @@ TI_STATUS txDataClsfr_RemoveClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pRe
             /* If we have reached the number of active entries, it means we couldn't find the requested entry */
             if (i == pClsfrParams->uNumActiveEntries)
             {
-                TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "classifier_RemoveClsfrEntry(): Entry not found - Aborting\n");
                 return PARAM_VALUE_NOT_VALID;
             }
 
@@ -632,8 +602,7 @@ TI_STATUS txDataClsfr_RemoveClsfrEntry(TI_HANDLE hTxDataQ, TClsfrTableEntry *pRe
 
         break;
 
-        default:
-TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "classifier_RemoveClsfrEntry(): Classifier type -- unknown - Aborting\n");
+        default:{}
     } 
     
     /* Decrement the number of classifier active entries */
@@ -662,13 +631,11 @@ TI_STATUS txDataClsfr_SetClsfrType (TI_HANDLE hTxDataQ, EClsfrType eNewClsfrType
 
 	if (eNewClsfrType > CLSFR_TYPE_MAX)
 	{
-TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_setClsfrType(): classifier type exceed its MAX \n");
 		return PARAM_VALUE_NOT_VALID;
     }
 	
 	if (pTxDataQ->tClsfrParams.eClsfrType == eNewClsfrType)
 	{
-TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_WARNING, "Classifier_setClsfrType(): equal classifier type --> will empty classifier table \n");
     }
 	
 	/* Update type and empty table. */
@@ -712,61 +679,31 @@ void txDataClsfr_PrintClsfrTable (TI_HANDLE hTxDataQ)
 
 	if (pClsfrParams->eClsfrType == D_TAG_CLSFR)
 	{
-		WLAN_OS_REPORT (("D_TAG classifier type selected...Nothing to print...\n"));
 		return;
 	}
 
-	WLAN_OS_REPORT (("Number of active entries in classifier table : %d\n",pClsfrParams->uNumActiveEntries));
 
 	switch (pClsfrParams->eClsfrType)
 	{
 		case DSCP_CLSFR:
-			WLAN_OS_REPORT (("+------+-------+\n"));
-			WLAN_OS_REPORT (("| Code | D-Tag |\n"));
-			WLAN_OS_REPORT (("+------+-------+\n"));
 
-			for (i = 0; i < pClsfrParams->uNumActiveEntries; i++)  
-            {
-				WLAN_OS_REPORT (("| %5d | %5d |\n",
-                    pClsfrParams->ClsfrTable[i].Dscp.CodePoint,pClsfrParams->ClsfrTable[i].DTag));
-			}
-
-			WLAN_OS_REPORT (("+-------+-------+\n"));
 			break;
 
 		case PORT_CLSFR:
-			WLAN_OS_REPORT (("+-------+-------+\n"));
-			WLAN_OS_REPORT (("| Port  | D-Tag |\n"));
-			WLAN_OS_REPORT (("+-------+-------+\n"));
 
-			for (i = 0; i < pClsfrParams->uNumActiveEntries; i++)  
-            {
-				WLAN_OS_REPORT (("| %5d | %5d |\n",
-                    pClsfrParams->ClsfrTable[i].Dscp.DstPortNum,pClsfrParams->ClsfrTable[i].DTag));
-			}
-
-			WLAN_OS_REPORT (("+-------+-------+\n"));
 			break;
 
 		case IPPORT_CLSFR:
 
-			WLAN_OS_REPORT (("+-------------+-------+-------+\n"));
-			WLAN_OS_REPORT (("| IP Address  | Port  | D-Tag |\n"));
-			WLAN_OS_REPORT (("+-------------+-------+-------+\n"));
 
 			for (i = 0; i < pClsfrParams->uNumActiveEntries; i++)  
             {
 				uIpAddr = pClsfrParams->ClsfrTable[i].Dscp.DstIPPort.DstIPAddress;
-				WLAN_OS_REPORT (("| %02x.%02x.%02x.%02x | %5d | %5d |\n",
-                    (uIpAddr & 0xFF),((uIpAddr >> 8) & (0xFF)),((uIpAddr >> 16) & (0xFF)),((uIpAddr >> 24) & (0xFF)),
-                    pClsfrParams->ClsfrTable[i].Dscp.DstIPPort.DstPortNum, pClsfrParams->ClsfrTable[i].DTag));
 			}
 
-			WLAN_OS_REPORT (("+-------------+-------+-------+\n"));
 			break;
 
 		default:
-TRACE0(pTxDataQ->hReport, REPORT_SEVERITY_ERROR, "Classifier_InsertClsfrEntry(): Classifier type -- unknown - Aborting\n");
 			break;
 	}
 }

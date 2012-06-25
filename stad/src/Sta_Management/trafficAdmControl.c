@@ -252,7 +252,6 @@ TI_STATUS trafficAdmCtrl_config (TI_HANDLE hTrafficAdmCtrl,
         pTrafficAdmCtrl->hAdmCtrlTimer[uAcId] = tmr_CreateTimer (pTrafficAdmCtrl->hTimer);
         if (pTrafficAdmCtrl->hAdmCtrlTimer[uAcId] == NULL)
         {
-            TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_ERROR, "trafficAdmCtrl_config(): Failed to create hAssocSmTimer!\n");
             return TI_NOK;
         }
     }
@@ -262,8 +261,6 @@ TI_STATUS trafficAdmCtrl_config (TI_HANDLE hTrafficAdmCtrl,
 						TRAFFIC_ADM_CTRL_SM_NUM_STATES, TRAFFIC_ADM_CTRL_SM_NUM_EVENTS, NULL, hOs);
 	if (status != TI_OK)
 	{
-TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_ERROR, "TRAFFIC_ADM_CTRL_SM: fsm_Config - Error  \n");
-
 		return TI_NOK;
 	}
 
@@ -271,9 +268,6 @@ TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_ERROR, "TRAFFIC_ADM_CTRL_SM: fs
     pTrafficAdmCtrl->useFixedMsduSize = pTrafficAdmCtrlInitParams->trafficAdmCtrlUseFixedMsduSize;
 
 	pTrafficAdmCtrl->dialogTokenCounter = INITIAL_DIALOG_TOKEN;
-	
-
-TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "TRAFFIC ADM CTRL -  configuration completed ..... \n");
 
 	return TI_OK;
 }
@@ -302,9 +296,6 @@ TI_STATUS trafficAdmCtrl_smEvent(trafficAdmCtrl_t *pTrafficAdmCtrl, TI_UINT8 eve
     /* It looks like it never happens. Anyway decided to check */
     if ( acID >= MAX_NUM_OF_AC )
     {
-        TRACE2( pTrafficAdmCtrl->hReport, REPORT_SEVERITY_ERROR,
-               "trafficAdmCtrl_smEvent. fsmTSpecInfo->acID=%d exceeds the limit %d\n",
-                   acID, MAX_NUM_OF_AC-1);
         handleRunProblem(PROBLEM_BUF_SIZE_VIOLATION);
         return TI_NOK;
     }
@@ -312,12 +303,9 @@ TI_STATUS trafficAdmCtrl_smEvent(trafficAdmCtrl_t *pTrafficAdmCtrl, TI_UINT8 eve
 	status = fsm_GetNextState(pTrafficAdmCtrl->pTrafficAdmCtrlSm, pTrafficAdmCtrl->currentState[acID], event, &nextState);
 	if (status != TI_OK)
 	{
-TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_ERROR, "ADM_CTRL: ERROR - failed getting next state \n");
-
 		return(TI_NOK);
 	}
 
-	TRACE3(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "trafficAdmCtrl_smEvent: <currentState = %d, event = %d> --> nextState = %d\n", pTrafficAdmCtrl->currentState[acID], event, nextState);
 
 	status = fsm_Event(pTrafficAdmCtrl->pTrafficAdmCtrlSm, &pTrafficAdmCtrl->currentState[acID], event, pData);
 
@@ -387,7 +375,6 @@ TI_STATUS trafficAdmCtrl_smWaitStop(fsmTSpecInfo_t *fsmTSpecInfo)
 	/* stop timer */
 	trafficAdmCtrl_stopTimer(pTrafficAdmCtrl,fsmTSpecInfo->pTSpecInfo->AC);
 
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "TRAFFIC ADM CTRL -  AC = %d,    Stoped ..... \n", pTSpecInfo->AC);
 
 	
 	return TI_OK;
@@ -487,8 +474,6 @@ TI_STATUS trafficAdmCtrl_smActionUnexpected(fsmTSpecInfo_t *fsmTSpecInfo)
 
 	pTrafficAdmCtrl = (trafficAdmCtrl_t*)(fsmTSpecInfo->hTrafficAdmCtrl);
 
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_ERROR, "TRAFFIC ADM CTRL -  AC = %d,    ActionUnexpected ..... \n", fsmTSpecInfo->acID);
-
 	return TI_OK;
 }
 
@@ -512,8 +497,6 @@ TI_STATUS trafficAdmCtrl_smActionUnexpectedTspecResponse(fsmTSpecInfo_t *fsmTSpe
 	/* Send event to user application - how come TSPEC response arrives without request ? */
 	qosMngr_sendUnexpectedTSPECResponseEvent (pTrafficAdmCtrl->hQosMngr,pTSpecInfo);
 
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_WARNING, "TRAFFIC ADM CTRL -  AC = %d,    ActionUnexpected ..... \n", fsmTSpecInfo->acID);
-
 	return TI_OK;
 }
 
@@ -536,8 +519,6 @@ TI_STATUS trafficAdmCtrl_smActionNop(fsmTSpecInfo_t *fsmTSpecInfo)
 
 	pTrafficAdmCtrl = (trafficAdmCtrl_t*)(fsmTSpecInfo->hTrafficAdmCtrl);
 	pTSpecInfo = fsmTSpecInfo->pTSpecInfo;
-
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "TRAFFIC ADM CTRL -  AC = %d,    Action NOP..... \n", pTSpecInfo->AC);
 
 	return TI_OK;
 }
@@ -680,8 +661,6 @@ TI_STATUS trafficAdmCtrl_recv(TI_HANDLE hTrafficAdmCtrl, TI_UINT8* pData, TI_UIN
 
 	if (action == ADDTS_RESPONSE_ACTION) 
 	{
-TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "action = 1 - ADDTS RESPONSE ACTION........!! \n");
-
 		/* parsing the dialog token */
 		dialogToken = *pData;
 		pData++;
@@ -692,14 +671,10 @@ TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "action = 1 - ADDT
 
 		tspecInfo.statusCode = statusCode;
 
-TRACE2(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "dialogToken = %d ,  statusCode = %d \n",dialogToken, statusCode);
-
 		trafficAdmCtrl_parseTspecIE(&tspecInfo, pData);
 
 		if (trafficAdmCtrl_tokenToAc (pTrafficAdmCtrl, dialogToken, &tacID) == TI_NOK)
 		{
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_WARNING, "dialog token Not found,  dialogToken = %d , \n",dialogToken);
-			
 			qosMngr_sendUnexpectedTSPECResponseEvent(pTrafficAdmCtrl->hQosMngr, &tspecInfo);
 		
 			return TI_NOK;
@@ -708,8 +683,6 @@ TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_WARNING, "dialog token Not foun
 		/* validate dialog token matching */
 		if(pTrafficAdmCtrl->dialogToken[tspecInfo.AC] != dialogToken)
 		{
-TRACE2(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_WARNING, "dialog token mismatch,  dialogToken = %d ,  acID = %d \n",dialogToken, tspecInfo.AC);
-			
 			qosMngr_sendUnexpectedTSPECResponseEvent(pTrafficAdmCtrl->hQosMngr, &tspecInfo);
 		
 			return TI_NOK;
@@ -727,10 +700,6 @@ TRACE2(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_WARNING, "dialog token mismatch
 		{
 			/* admission reject */
 			/********************/
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "***** admCtrlQos_recv: admission reject [ statusCode = %d ]\n",statusCode);
-			
-			
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "ADDTS Response (reject) userPriority = %d , \n", tspecInfo.userPriority);
 			
 			trafficAdmCtrl_smEvent(pTrafficAdmCtrl, TRAFFIC_ADM_CTRL_SM_EVENT_REJECT, &fsmTSpecInfo);
 			
@@ -740,21 +709,12 @@ TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "ADDTS Response (r
 			/* admission accept */
 			/********************/
 			
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "***** admCtrlQos_recv: admission accept [ statusCode = %d ]\n",statusCode);
-			
-			
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "ADDTS Response (accepted) userPriority = %d ,  \n", tspecInfo.userPriority);
-	
-TRACE2(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "mediumTime = %d ,  surplusBandwidthAllowance = %d \n", tspecInfo.mediumTime, tspecInfo.surplausBwAllowance);
-			
 			trafficAdmCtrl_smEvent(pTrafficAdmCtrl, TRAFFIC_ADM_CTRL_SM_EVENT_ACCEPT, &fsmTSpecInfo);
 		}
 	}
 	else
 	{
 		status = TI_NOK;
-TRACE1(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "trafficAdmCtrl_recv: unknown action code = %d ,  \n",action);
-
 	}
 	return status;
 }
@@ -781,15 +741,11 @@ TI_STATUS trafficAdmCtrl_sendDeltsFrame(TI_HANDLE hTrafficAdmCtrl, tspecInfo_t *
 	tsInfo_t            tsInfo;
 	trafficAdmCtrl_t    *pTrafficAdmCtrl = (trafficAdmCtrl_t *)hTrafficAdmCtrl;
 
-
-    TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "admCtrlQos_sendDeltsFrame: Enter....!! \n");
-
 	/* Allocate a TxCtrlBlk and data buffer (large enough for the max packet) */
     pPktCtrlBlk = TWD_txCtrlBlk_Alloc (pTrafficAdmCtrl->hTWD);
     pPktBuffer  = txCtrl_AllocPacketBuffer (pTrafficAdmCtrl->hTxCtrl, pPktCtrlBlk, 2000);
     if (pPktBuffer == NULL)
     {
-        TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_ERROR , ": No memory\n");
         TWD_txCtrlBlk_Free (pTrafficAdmCtrl->hTWD, pPktCtrlBlk);
         return TI_NOK;
     }
@@ -1060,7 +1016,6 @@ TI_STATUS trafficAdmCtrl_buildFrameHeader(trafficAdmCtrl_t *pTrafficAdmCtrl, TTx
 	if (currBssType != BSS_INFRASTRUCTURE)
     {
  		/* report failure but don't stop... */
-TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_ERROR, "trafficAdmCtrl_buildFrameHeader: Error !! currBssType = BSS_INFRASTRUCTURE \n");
 
 		return TI_NOK;
     }
@@ -1101,15 +1056,11 @@ TI_STATUS trafficAdmCtrl_sendAdmissionReq(TI_HANDLE hTrafficAdmCtrl, tspecInfo_t
 	TI_UINT32			totalLen = 0;
 	trafficAdmCtrl_t	*pTrafficAdmCtrl = (trafficAdmCtrl_t*)hTrafficAdmCtrl;
 
-
-TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_INFORMATION, "admCtrlQos_smAdmissionReq: Enter....!! \n");
-
 	/* Allocate a TxCtrlBlk and data buffer (large enough for the max packet) */
     pPktCtrlBlk = TWD_txCtrlBlk_Alloc (pTrafficAdmCtrl->hTWD);
     pPktBuffer  = txCtrl_AllocPacketBuffer (pTrafficAdmCtrl->hTxCtrl, pPktCtrlBlk, 2000);
     if (pPktBuffer == NULL)
     {
-        TRACE0(pTrafficAdmCtrl->hReport, REPORT_SEVERITY_ERROR , ": No memory\n");
         TWD_txCtrlBlk_Free (pTrafficAdmCtrl->hTWD, pPktCtrlBlk);
         return TI_NOK;
     }
@@ -1298,19 +1249,5 @@ void trafficAdmCtrl_parseTspecIE(tspecInfo_t *pTSpecInfo, TI_UINT8 *pData)
  *************************************************************************/
 void trafficAdmCtrl_print(trafficAdmCtrl_t *pTrafficAdmCtr)
 {
-	TI_UINT32 acID;
-
-	WLAN_OS_REPORT(("     traffic Adm Ctrl  \n"));
-	WLAN_OS_REPORT(("-----------------------------------\n\n"));
-	WLAN_OS_REPORT(("timeout                   = %d\n",pTrafficAdmCtr->timeout));
-	WLAN_OS_REPORT(("dialogTokenCounter        = %d\n",pTrafficAdmCtr->dialogTokenCounter));
-
-	for (acID = 0 ; acID < MAX_NUM_OF_AC ; acID++)
-	{
-			WLAN_OS_REPORT(("     AC = %d  \n",acID));
-			WLAN_OS_REPORT(("----------------------\n"));
-			WLAN_OS_REPORT(("currentState   = %d \n",pTrafficAdmCtr->currentState[acID]));
-			WLAN_OS_REPORT(("dialogToken    = %d \n",pTrafficAdmCtr->dialogToken[acID]));
-	}
 }
 	

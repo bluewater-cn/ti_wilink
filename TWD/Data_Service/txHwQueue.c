@@ -345,7 +345,6 @@ ETxHwQueStatus txHwQueue_AllocResources (TI_HANDLE hTxHwQueue, TTxCtrlBlk *pTxCt
     /* If we need more blocks than available, return  STOP_CURRENT (stop current queue and requeue packet). */
     if (uNumBlksToAlloc > uAvailableBlks)
     {
-        TRACE6(pTxHwQueue->hReport, REPORT_SEVERITY_INFORMATION, ": No resources, Queue=%d, ReqBlks=%d, FreeBlks=%d, UsedBlks=%d, AvailBlks=%d, UsedPkts=%d\n", uQueueId, uNumBlksToAlloc, pTxHwQueue->uNumTotalBlksFree, pQueueInfo->uNumBlksUsed, uAvailableBlks, pTxHwQueue->uNumUsedDescriptors);
         pQueueInfo->uNumBlksCausedBusy = uNumBlksToAlloc;
         pQueueInfo->bQueueBusy = TI_TRUE;
 
@@ -412,13 +411,11 @@ ETxHwQueStatus txHwQueue_AllocResources (TI_HANDLE hTxHwQueue, TTxCtrlBlk *pTxCt
     pTxHwQueue->uNumTotalBlksFree -= uNumBlksToAlloc;
     pQueueInfo->uNumBlksUsed += uNumBlksToAlloc;
 
-    TRACE6(pTxHwQueue->hReport, REPORT_SEVERITY_INFORMATION, ": SUCCESS,  Queue=%d, Req-blks=%d , Free=%d, Used=%d, Reserved=%d, Accumulated=%d\n", uQueueId, uNumBlksToAlloc, pTxHwQueue->uNumTotalBlksFree, pQueueInfo->uNumBlksUsed, pQueueInfo->uNumBlksReserved, pQueueInfo->uAllocatedBlksCntr);
 
     /* If no resources for another similar packet, return STOP_NEXT (to stop current queue). */
     /* Note: Current packet transmission is continued */
     if ( (uNumBlksToAlloc << 1) > uAvailableBlks )
     {
-        TRACE6(pTxHwQueue->hReport, REPORT_SEVERITY_INFORMATION, ": No resources for next pkt, Queue=%d, ReqBlks=%d, FreeBlks=%d, UsedBlks=%d, AvailBlks=%d, UsedPkts=%d\n", uQueueId, uNumBlksToAlloc, pTxHwQueue->uNumTotalBlksFree, pQueueInfo->uNumBlksUsed, uAvailableBlks, pTxHwQueue->uNumUsedDescriptors);
         pQueueInfo->uNumBlksCausedBusy = uNumBlksToAlloc;
         pQueueInfo->bQueueBusy = TI_TRUE;
         return TX_HW_QUE_STATUS_STOP_NEXT;
@@ -463,13 +460,6 @@ static void txHwQueue_UpdateFreeBlocks (TTxHwQueue *pTxHwQueue, TI_UINT32 uQueue
     newUsedBlks = pQueueInfo->uAllocatedBlksCntr - uFreeBlocks;
 
     numBlksToFree = pQueueInfo->uNumBlksUsed - newUsedBlks;
-
-#ifdef TI_DBG   /* Sanity check: make sure we don't free more than is allocated. */
-    if (numBlksToFree > pQueueInfo->uNumBlksUsed)
-    {
-        TRACE5(pTxHwQueue->hReport, REPORT_SEVERITY_ERROR, ":  Try to free more blks than used: Queue %d, ToFree %d, Used %d, HostAlloc=0x%x, FwFree=0x%x\n", uQueueId, numBlksToFree, pQueueInfo->uNumBlksUsed, pQueueInfo->uAllocatedBlksCntr, uFreeBlocks);
-    }
-#endif
 
     /* Update total free blocks and Queue used blocks with the freed blocks number. */
     pTxHwQueue->uNumTotalBlksFree += numBlksToFree;
@@ -516,7 +506,6 @@ static void txHwQueue_UpdateFreeBlocks (TTxHwQueue *pTxHwQueue, TI_UINT32 uQueue
             pTxHwQueue->uNumTotalBlksReserved += numBlksToFree; /* Add change to total reserved.*/
     }
 
-    TRACE5(pTxHwQueue->hReport, REPORT_SEVERITY_INFORMATION, ":  Queue %d, ToFree %d, Used %d, HostAlloc=0x%x, FwFree=0x%x\n", uQueueId, numBlksToFree, pQueueInfo->uNumBlksUsed, pQueueInfo->uAllocatedBlksCntr, uFreeBlocks);
 }
 
 
@@ -560,13 +549,6 @@ ETxnStatus txHwQueue_UpdateFreeResources (TI_HANDLE hTxHwQueue, FwStatus_t *pFwS
             uNewNumUsedDescriptors = 0x100 - (TI_UINT32)(pTxHwQueue->uFwTxResultsCntr - pTxHwQueue->uDrvTxPacketsCntr);
         }
     
-#ifdef TI_DBG   /* Sanity check: make sure we don't free more descriptors than allocated. */
-        if (uNewNumUsedDescriptors >= pTxHwQueue->uNumUsedDescriptors)
-        {
-            TRACE2(pTxHwQueue->hReport, REPORT_SEVERITY_ERROR, ":  Used descriptors number should decrease: UsedDesc %d, NewUsedDesc %d\n", pTxHwQueue->uNumUsedDescriptors, uNewNumUsedDescriptors);
-        }
-#endif
-    
         /* Update number of packets left in FW (for descriptors allocation check). */
         pTxHwQueue->uNumUsedDescriptors = uNewNumUsedDescriptors;
     }
@@ -599,7 +581,6 @@ ETxnStatus txHwQueue_UpdateFreeResources (TI_HANDLE hTxHwQueue, FwStatus_t *pFwS
                  set the queue's backpressure bit to indicate NOT-busy! */
             if (pQueueInfo->uNumBlksCausedBusy <= uAvailableBlks)
             {
-                TRACE6(pTxHwQueue->hReport, REPORT_SEVERITY_INFORMATION, ": Queue Available, Queue=%d, ReqBlks=%d, FreeBlks=%d, UsedBlks=%d, AvailBlks=%d, UsedPkts=%d\n", uQueueId, pQueueInfo->uNumBlksCausedBusy, pTxHwQueue->uNumTotalBlksFree, pQueueInfo->uNumBlksUsed, uAvailableBlks, pTxHwQueue->uNumUsedDescriptors);
                 SET_QUEUE_BACKPRESSURE(&uBackpressure, uQueueId); /* Start queue. */
                 pQueueInfo->bQueueBusy = TI_FALSE;
             }
@@ -659,7 +640,6 @@ void txHwQueue_RegisterCb (TI_HANDLE hTxHwQueue, TI_UINT32 uCallBackId, void *fC
             break;
 
         default:
-            TRACE1(pTxHwQueue->hReport, REPORT_SEVERITY_ERROR, " - Illegal parameter = %d\n", uCallBackId);
             return;
     }
 }
@@ -673,39 +653,6 @@ void txHwQueue_RegisterCb (TI_HANDLE hTxHwQueue, TI_UINT32 uCallBackId, void *fC
 #ifdef TI_DBG
 void txHwQueue_PrintInfo (TI_HANDLE hTxHwQueue)
 {
-    TTxHwQueue *pTxHwQueue = (TTxHwQueue *)hTxHwQueue;
-    TI_INT32 TxQid;
-
-    /* Print the Tx-HW-Queue information: */
-    WLAN_OS_REPORT(("Hw-Queues Information:\n"));
-    WLAN_OS_REPORT(("======================\n"));
-    WLAN_OS_REPORT(("Total Blocks:           %d\n", pTxHwQueue->uNumTotalBlks));
-    WLAN_OS_REPORT(("Total Free Blocks:      %d\n", pTxHwQueue->uNumTotalBlksFree));
-    WLAN_OS_REPORT(("Total Reserved Blocks:  %d\n", pTxHwQueue->uNumTotalBlksReserved));
-    WLAN_OS_REPORT(("Total Used Descriptors: %d\n", pTxHwQueue->uNumUsedDescriptors));
-    WLAN_OS_REPORT(("FwTxResultsCntr:        %d\n", pTxHwQueue->uFwTxResultsCntr));
-    WLAN_OS_REPORT(("DrvTxPacketsCntr:       %d\n", pTxHwQueue->uDrvTxPacketsCntr));
-
-    for(TxQid = 0; TxQid < MAX_NUM_OF_AC; TxQid++)
-    {
-        WLAN_OS_REPORT(("Q=%d: Used=%d, Reserve=%d, Threshold=%d\n", 
-            TxQid,
-            pTxHwQueue->aTxHwQueueInfo[TxQid].uNumBlksUsed,
-            pTxHwQueue->aTxHwQueueInfo[TxQid].uNumBlksReserved,
-            pTxHwQueue->aTxHwQueueInfo[TxQid].uNumBlksThresh));
-    }
-
-    WLAN_OS_REPORT(("\n"));
-
-    for(TxQid = 0; TxQid < MAX_NUM_OF_AC; TxQid++)
-    {
-        WLAN_OS_REPORT(("Queue=%d: HostAllocCount=0x%x, FwFreeCount=0x%x, BusyBlks=%d, Busy=%d\n", 
-            TxQid,
-            pTxHwQueue->aTxHwQueueInfo[TxQid].uAllocatedBlksCntr,
-            pTxHwQueue->aTxHwQueueInfo[TxQid].uFwFreedBlksCntr,
-            pTxHwQueue->aTxHwQueueInfo[TxQid].uNumBlksCausedBusy,
-            pTxHwQueue->aTxHwQueueInfo[TxQid].bQueueBusy));
-    }
 }
 
 

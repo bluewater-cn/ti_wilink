@@ -66,20 +66,8 @@ static void mibDbgGetArpIpTable(TI_HANDLE hTWD)
 	status = TWD_ReadMib(hTWD,NULL,NULL,(void*)&mib);
 	if (status != TI_OK)
 	{
-		WLAN_OS_REPORT(("Get ARP Table failed\n"));
 		return;
 	}
-
-	/* print ARP Table */
-    WLAN_OS_REPORT(("ARP IP Table:\n"));
-    WLAN_OS_REPORT(("FilteringEnable: %s (%d)\n", 
-				   (mib.aData.ArpIpAddressesTable.FilteringEnable)?"Enable":"Disable",
-				   mib.aData.ArpIpAddressesTable.FilteringEnable));
-    WLAN_OS_REPORT(("ArpIpAddress: %d.%d.%d.%d\n", 
-					mib.aData.ArpIpAddressesTable.addr[0],
-					mib.aData.ArpIpAddressesTable.addr[1],
-					mib.aData.ArpIpAddressesTable.addr[2],
-					mib.aData.ArpIpAddressesTable.addr[3]));
 }
 
 static void mibDbgGetGroupAddressTable(TI_HANDLE hTWD)
@@ -103,27 +91,8 @@ static void mibDbgGetGroupAddressTable(TI_HANDLE hTWD)
 	status = TWD_ReadMib(hTWD,NULL,NULL,(void*)&mib);
 	if (status != TI_OK)
 	{
-		WLAN_OS_REPORT(("Get Group Address Table failed\n"));
 		return;
 	}
-
-	/* print Group Address Table */
-    WLAN_OS_REPORT(("Group addresses Table:\n"));
-    WLAN_OS_REPORT(("FilteringEnable: %s (%d)\n", 
-				   (mib.aData.GroupAddressTable.bFilteringEnable)?"Enable":"Disable",
-				   mib.aData.GroupAddressTable.bFilteringEnable));
-    WLAN_OS_REPORT(("nNumberOfAddresses: %d\n", 
-				   mib.aData.GroupAddressTable.nNumberOfAddresses));
-
-    WLAN_OS_REPORT(("Group addresses: \n"));
-    for ( i = 0 ; i < MIB_MAX_MULTICAST_GROUP_ADDRS ; i++ )
-		WLAN_OS_REPORT(("%x:%x:%x:%x:%x:%x\n",     
-						mib.aData.GroupAddressTable.aGroupTable[i][0],
-						mib.aData.GroupAddressTable.aGroupTable[i][1],
-						mib.aData.GroupAddressTable.aGroupTable[i][2],
-						mib.aData.GroupAddressTable.aGroupTable[i][3],
-						mib.aData.GroupAddressTable.aGroupTable[i][4],
-						mib.aData.GroupAddressTable.aGroupTable[i][5]));
 }
 
 static void mibDbgGetCounterTable(TI_HANDLE hTWD)
@@ -140,15 +109,8 @@ static void mibDbgGetCounterTable(TI_HANDLE hTWD)
 	status = TWD_ReadMib(hTWD,NULL,NULL,(void*)&mib);
 	if (status != TI_OK)
 	{
-		WLAN_OS_REPORT(("Get Counter Table failed\n"));
 		return;
 	}
-
-	/* print Counter Table */
-    WLAN_OS_REPORT(("FCS error count= %d \nPLCP  error count = %d \nSeq error count= %d\n",     
-					mib.aData.CounterTable.FCSErrorCount,
-					mib.aData.CounterTable.PLCPErrorCount,
-					mib.aData.CounterTable.SeqNumMissCount));
 
 }
 
@@ -159,7 +121,6 @@ static void mibDbgModifyCtsToSelf(TI_HANDLE hTWD, void* pParam)
 
 	if (pParam == NULL) 
 	{
-		WLAN_OS_REPORT(("Modify CTS To Self failed: No Parameter received\n"));
 		return;
 	}
 
@@ -171,15 +132,8 @@ static void mibDbgModifyCtsToSelf(TI_HANDLE hTWD, void* pParam)
 	status = TWD_WriteMib(hTWD, &mib);
 	if (status != TI_OK)
 	{
-		WLAN_OS_REPORT(("Modify CTS To Self failed\n"));
 		return;
 	}
-	WLAN_OS_REPORT(("Modify CTS To Self OK\n"));
-
-	WLAN_OS_REPORT(("CtsToSelf = %s (%d)\n",
-				   mib.aData.CTSToSelfEnable?"Enable":"Disable",
-				   mib.aData.CTSToSelfEnable));
-	WLAN_OS_REPORT(("CTS to self: [0 - Disable, 1 - Enable]\n"));
 }
 
 static void mibDbgGetCtsToSelf(TI_HANDLE hTWD)
@@ -194,14 +148,8 @@ static void mibDbgGetCtsToSelf(TI_HANDLE hTWD)
 	status = TWD_ReadMib(hTWD,NULL,NULL,(void*)&mib);
 	if (status != TI_OK)
 	{
-		WLAN_OS_REPORT(("Get CTS To Self failed\n"));
 		return;
 	}
-
-	WLAN_OS_REPORT(("CtsToSelf = %s (%d)\n",
-				   mib.aData.CTSToSelfEnable?"Enable":"Disable",
-				   mib.aData.CTSToSelfEnable));
-	WLAN_OS_REPORT(("CTS to self: [0 - Disable, 1 - Enable]\n"));
 }
 
 static void mibDbgSetMaxRxLifetime(TI_HANDLE hTWD, void* pParam)
@@ -211,7 +159,6 @@ static void mibDbgSetMaxRxLifetime(TI_HANDLE hTWD, void* pParam)
 
 	if (pParam == NULL) 
 	{
-		WLAN_OS_REPORT(("Set Maximum Rx Life Time failed: No Parameter received\n"));
 		return;
 	}
 
@@ -222,7 +169,6 @@ static void mibDbgSetMaxRxLifetime(TI_HANDLE hTWD, void* pParam)
 	status = TWD_WriteMib(hTWD, &mib);
 	if (status != TI_OK)
 	{
-		WLAN_OS_REPORT(("Set Maximum Rx Life Time failed\n"));
 		return;
 	}
 }
@@ -234,14 +180,6 @@ static void mibDbgSetMaxRxLifetime(TI_HANDLE hTWD, void* pParam)
  */
 void mibDbgPrintFunctions(void)
 {
-	WLAN_OS_REPORT(("\n          MIB Dbg Functions   \n"));
-	WLAN_OS_REPORT(("--------------------------------------\n"));
-
-	WLAN_OS_REPORT(("2101 - Print ARP Table\n"));
-	WLAN_OS_REPORT(("2102 - Print Group Address Table\n"));
-	WLAN_OS_REPORT(("2103 - Print Counter Table\n"));
-	WLAN_OS_REPORT(("2104 - Print Modify CTS to Self\n"));
-	WLAN_OS_REPORT(("2105 - Print Max RX Life Time\n"));
 }
 
 void MibDebugFunction(TI_HANDLE hTWD ,TI_UINT32 funcType, void* pParam)
@@ -275,7 +213,6 @@ void MibDebugFunction(TI_HANDLE hTWD ,TI_UINT32 funcType, void* pParam)
 		mibDbgSetMaxRxLifetime(hTWD, pParam);
 		break;
 	default:
-        WLAN_OS_REPORT(("MIB Debug: Invalid function type in MIB Debug function: %d\n", funcType));
 		break;
 	}
 }

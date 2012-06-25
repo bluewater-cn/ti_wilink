@@ -542,8 +542,6 @@ TI_STATUS drvMain_Create (TI_HANDLE  hOs,
     *pReport      = pDrvMain->tStadHandles.hReport;
     *pCmdDispatch = pDrvMain->tStadHandles.hCmdDispatch;
 
-    WLAN_INIT_REPORT (("drvMain_Create: success\n"));
-
     return TI_OK;
 }
 
@@ -999,8 +997,7 @@ static void drvMain_InvokeAction (TI_HANDLE hDrvMain)
     case ACTION_TYPE_STOP:
         drvMain_SmEvent (hDrvMain, SM_EVENT_STOP);
         break;
-        default:
-            TRACE1(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_ERROR , "drvMain_InvokeAction(): Action=%d\n", pDrvMain->eAction);
+        default:{}
     }
 }
 
@@ -1016,7 +1013,6 @@ static void drvMain_GetFileCb (TI_HANDLE hDrvMain)
         case FILE_TYPE_FW:      eSmEvent = SM_EVENT_FW_FILE_READY;     break;
         case FILE_TYPE_FW_NEXT: eSmEvent = SM_EVENT_FW_FILE_READY;     break;
         default:
-            TRACE1(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_ERROR , "drvMain_GetFileCb(): Unknown eFileType=%d\n", pDrvMain->tFileInfo.eFileType);
             return;
     }
     drvMain_SmEvent (hDrvMain, eSmEvent);
@@ -1126,18 +1122,6 @@ static TI_STATUS drvMain_ConfigFw (TI_HANDLE hDrvMain)
     /* Configure the FW from the TWD DB */
     TWD_ConfigFw (pDrvMain->tStadHandles.hTWD);
 
-    TRACE0(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_INIT , "EXIT FROM INIT\n");
-
-    /* Print the driver and firmware version and the mac address */
-    WLAN_OS_REPORT(("\n"));
-    WLAN_OS_REPORT(("--------------------------------------------------------------------\n"));
-    WLAN_OS_REPORT(("Driver Version  : %s\n", SW_VERSION_STR));
-    WLAN_OS_REPORT(("Firmware Version: %s\n", pFwInfo->fwVer));
-    WLAN_OS_REPORT(("Station ID      : %02X-%02X-%02X-%02X-%02X-%02X\n",
-                    pMacAddr[0], pMacAddr[1], pMacAddr[2], pMacAddr[3], pMacAddr[4], pMacAddr[5]));
-    WLAN_OS_REPORT(("--------------------------------------------------------------------\n"));
-    WLAN_OS_REPORT(("\n"));
-
     return TI_OK;
 }
 
@@ -1231,13 +1215,9 @@ TI_STATUS drvMain_InsertAction (TI_HANDLE hDrvMain, EActionType eAction)
     TDrvMain *pDrvMain = (TDrvMain *) hDrvMain;
 
 
-    WLAN_OS_REPORT(("%s: eAction: %d\n", __func__, eAction));
-
     if (pDrvMain->eAction == eAction || alreadyRunning)
     {
         context_LeaveCriticalSection(pDrvMain->tStadHandles.hContext);
-        TRACE0(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_CONSOLE, "Action is identical to last action!\n");
-        WLAN_OS_REPORT(("Action %d is identical to last action or alreadyRunning == %d!\n", eAction, alreadyRunning));
         return TI_NOK;
     }
 
@@ -1258,7 +1238,6 @@ TI_STATUS drvMain_InsertAction (TI_HANDLE hDrvMain, EActionType eAction)
         alreadyRunning = TI_FALSE;
         context_LeaveCriticalSection(pDrvMain->tStadHandles.hContext);
 
-        TRACE0(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_ERROR , "drvMain_InsertAction(): Couldn't allocate signal object!\n");
         return TI_NOK;
     }
 
@@ -1301,8 +1280,6 @@ TI_STATUS drvMain_Recovery (TI_HANDLE hDrvMain)
 
     pDrvMain->uNumOfRecoveryAttempts++;
 
-    TRACE1(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_CONSOLE,".....drvMain_Recovery, ts=%d\n", os_timeStampMs(pDrvMain->tStadHandles.hOs));
-    WLAN_OS_REPORT((".....drvMain_Recovery, ts=%d # of times = %d\n", os_timeStampMs(pDrvMain->tStadHandles.hOs),pDrvMain->uNumOfRecoveryAttempts++));
     drvMain_SmEvent (hDrvMain, SM_EVENT_RECOVERY);
     return TI_OK;
 
@@ -1326,8 +1303,6 @@ static void drvMain_RecoveryNotify (TDrvMain *pDrvMain)
     scr_notifyFWReset (pDrvMain->tStadHandles.hSCR);
     PowerMgr_notifyFWReset (pDrvMain->tStadHandles.hPowerMgr);
 
-    TRACE1(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_CONSOLE, ".....drvMain_RecoveryNotify: End Of Recovery, ts=%d\n", os_timeStampMs(pDrvMain->tStadHandles.hOs));
-    WLAN_OS_REPORT((".....drvMain_RecoveryNotify: End Of Recovery, ts=%d\n", os_timeStampMs(pDrvMain->tStadHandles.hOs)));
     cmdHndlr_ClearPendingCommands (pDrvMain->tStadHandles.hCmdHndlr);
 }
 
@@ -1351,8 +1326,6 @@ static void drvMain_RecoveryNotify (TDrvMain *pDrvMain)
 static void drvMain_SmWatchdogTimeout (TI_HANDLE hDrvMain)
 {
     TDrvMain *pDrvMain = (TDrvMain *)hDrvMain;
-
-    TRACE1(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_ERROR , "drvMain_SmWatchdogTimeout():  State = %d\n", pDrvMain->eSmState);
 
     /* Send failure event directly to the SM (so the drvMain_SmEvent won't block it).  */
 
@@ -1386,12 +1359,6 @@ static void drvMain_SmEvent (TI_HANDLE hDrvMain, ESmEvent eEvent)
     /* If the SM is busy, save event and exit (will be handled when current event is finished) */
     if (pDrvMain->uPendingEventsCount > 1)
     {
-        /* Only one pending event is expected (in addition to the handled one, so two together). */
-        if (pDrvMain->uPendingEventsCount > 2)
-        {
-            TRACE3(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_ERROR , "drvMain_SmEvent():  Multiple pending events (%d), State = %d, Event = %d\n", pDrvMain->uPendingEventsCount, pDrvMain->eSmState, eEvent);
-        }
-
         /* Exit. The current event will be handled by the following while loop of the first instance. */
         return;
     }
@@ -1433,7 +1400,6 @@ static void drvMain_Sm (TI_HANDLE hDrvMain, ESmEvent eEvent)
     TI_HANDLE    hOs        = pDrvMain->tStadHandles.hOs;
     TI_UINT32    uSdioConIndex = 0;
 
-    TRACE2(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_INFORMATION , "drvMain_Sm():  State = %d, Event = %d\n", pDrvMain->eSmState, eEvent);
 
     /*
      *  General explenations:
@@ -1498,8 +1464,6 @@ static void drvMain_Sm (TI_HANDLE hDrvMain, ESmEvent eEvent)
 			if((eStatus != TI_OK) &&
 			   (uSdioConIndex < (SDIO_CONNECT_THRESHOLD - 1)))
             {
-                     TRACE0(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_WARNING , "SDBus Connect Failed\n");
-                     WLAN_OS_REPORT(("Try to SDBus Connect again...\n"));
                      if (uSdioConIndex > 1)
 						hPlatform_DevicePowerOffSetLongerDelay();
 					 else
@@ -1510,8 +1474,6 @@ static void drvMain_Sm (TI_HANDLE hDrvMain, ESmEvent eEvent)
 
   		if(eStatus != TI_OK)
 		{
-			WLAN_OS_REPORT(("SDBus Connect Failed, Set Object Event !!\r\n"));
-			TRACE0(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_ERROR , "SDBus Connect Failed, Set Object Event !!\r\n");
             if (!pDrvMain->bRecovery)
 			{
 				os_SignalObjectSet (hOs, pDrvMain->hSignalObj);
@@ -1724,7 +1686,6 @@ static void drvMain_Sm (TI_HANDLE hDrvMain, ESmEvent eEvent)
         pDrvMain->eSmState = SM_STATE_FAILED;
         txnQ_DisconnectBus (pDrvMain->tStadHandles.hTxnQ);
         hPlatform_DevicePowerOff ();
-        WLAN_OS_REPORT(("[WLAN] Exit application after 15 fails, now is %d\n",pDrvMain->uNumOfRecoveryAttempts));
         if (!pDrvMain->bRecovery)
 	{
 	    if (pDrvMain->hSignalObj)
@@ -1754,7 +1715,6 @@ static void drvMain_Sm (TI_HANDLE hDrvMain, ESmEvent eEvent)
         }
         break;
  default:
-        TRACE2(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_ERROR , "drvMain_Sm: Unknown state, eEvent=%u at state=%u\n", eEvent, pDrvMain->eSmState);
         /* Note: Handled below as a failure since the status remains TI_NOK */
         break;
     }
@@ -1764,7 +1724,6 @@ static void drvMain_Sm (TI_HANDLE hDrvMain, ESmEvent eEvent)
         (pDrvMain->eSmState != SM_STATE_FAILED) &&
         (pDrvMain->eSmState != SM_STATE_STOPPING_ON_FAIL))
     {
-        TRACE3(pDrvMain->tStadHandles.hReport, REPORT_SEVERITY_ERROR , "drvMain_Sm: eEvent=%u at state=%u, status=%d\n", eEvent, pDrvMain->eSmState, eStatus);
         pDrvMain->eSmState = SM_STATE_STOPPING_ON_FAIL;
         wlanDrvIf_UpdateDriverState (hOs, DRV_STATE_FAILED);
 

@@ -48,7 +48,6 @@
 #include "osApi.h"
 #include "report.h"
 #include "context.h"
-#include "bmtrace_api.h"
 
 
 
@@ -109,7 +108,6 @@ TI_HANDLE context_Create (TI_HANDLE hOs)
 	
 	if (!hContext)
 	{
-		WLAN_OS_REPORT (("context_Create():  Allocation failed!!\n"));
 		return NULL;
 	}
 	
@@ -223,7 +221,6 @@ TI_UINT32 context_RegisterClient (TI_HANDLE       hContext,
     /* If max number of clients is exceeded, report error and exit. */
     if (uClientId == MAX_CLIENTS) 
     {
-        TRACE0(pContext->hReport, REPORT_SEVERITY_ERROR , "context_RegisterClient() MAX_CLIENTS limit exceeded!!\n");
         return 0;
     }
 
@@ -242,16 +239,10 @@ TI_UINT32 context_RegisterClient (TI_HANDLE       hContext,
                       uNameSize);
         pContext->aClientName[uClientId].uSize = uNameSize;
     }
-    else 
-    {
-        TRACE0(pContext->hReport, REPORT_SEVERITY_ERROR , "context_RegisterClient() MAX_NAME_SIZE limit exceeded!\n");
-    }
 #endif /* TI_DBG */
 
     /* Increment clients number and return new client ID. */
     pContext->uNumClients++;
-
-    TRACE2(pContext->hReport, REPORT_SEVERITY_INIT , "context_RegisterClient(): Client=, ID=%d, enabled=%d\n", uClientId, bEnable);
 
     return uClientId;
 }
@@ -277,7 +268,6 @@ void context_RequestSchedule (TI_HANDLE hContext, TI_UINT32 uClientId)
 
 #ifdef TI_DBG
     pContext->aRequestCount[uClientId]++; 
-    TRACE3(pContext->hReport, REPORT_SEVERITY_INFORMATION , "context_RequestSchedule(): Client=, ID=%d, enabled=%d, pending=%d\n", uClientId, pContext->aClientEnabled[uClientId], pContext->aClientPending[uClientId]);
 #endif /* TI_DBG */
 
     /* Set client's Pending flag */
@@ -322,9 +312,6 @@ void context_DriverTask (TI_HANDLE hContext)
     TContextCbFunc  fCbFunc;
     TI_HANDLE       hCbHndl;
     TI_UINT32       i;
-    CL_TRACE_START_L1();
-
-    TRACE0(pContext->hReport, REPORT_SEVERITY_INFORMATION , "context_DriverTask():\n");
 
     /* For all registered clients do: */
 	for (i = 0; i < pContext->uNumClients; i++)
@@ -333,8 +320,7 @@ void context_DriverTask (TI_HANDLE hContext)
         if (pContext->aClientPending[i]  &&  pContext->aClientEnabled[i])
         {
             #ifdef TI_DBG
-                pContext->aInvokeCount[i]++; 
-                TRACE1(pContext->hReport, REPORT_SEVERITY_INFORMATION , "Invoking - Client=, ID=%d\n", i);
+                pContext->aInvokeCount[i]++;
             #endif /* TI_DBG */
 
             /* Clear client's pending flag */
@@ -346,8 +332,6 @@ void context_DriverTask (TI_HANDLE hContext)
             fCbFunc(hCbHndl);
         }
     }
-
-    CL_TRACE_END_L1("tiwlan_drv.ko", "CONTEXT", "TASK", "");
 }
 
 
@@ -371,10 +355,8 @@ void context_EnableClient (TI_HANDLE hContext, TI_UINT32 uClientId)
 #ifdef TI_DBG
     if (pContext->aClientEnabled[uClientId])
     {
-        TRACE0(pContext->hReport, REPORT_SEVERITY_ERROR , "context_EnableClient() Client  already enabled!!\n");
         return;
     }
-    TRACE3(pContext->hReport, REPORT_SEVERITY_INFORMATION , "context_EnableClient(): Client=, ID=%d, enabled=%d, pending=%d\n", uClientId, pContext->aClientEnabled[uClientId], pContext->aClientPending[uClientId]);
 #endif /* TI_DBG */
 
     /* Enable client */
@@ -410,10 +392,8 @@ void context_DisableClient (TI_HANDLE hContext, TI_UINT32 uClientId)
 #ifdef TI_DBG
     if (!pContext->aClientEnabled[uClientId])
     {
-        TRACE0(pContext->hReport, REPORT_SEVERITY_ERROR , "context_DisableClient() Client  already disabled!!\n");
         return;
     }
-    TRACE3(pContext->hReport, REPORT_SEVERITY_INFORMATION , "context_DisableClient(): Client=, ID=%d, enabled=%d, pending=%d\n", uClientId, pContext->aClientEnabled[uClientId], pContext->aClientPending[uClientId]);
 #endif /* TI_DBG */
 
     /* Disable client */
@@ -437,8 +417,6 @@ void context_EnterCriticalSection (TI_HANDLE hContext)
 {
 	TContext *pContext = (TContext *)hContext;
 
-    TRACE0(pContext->hReport, REPORT_SEVERITY_INFORMATION , "context_EnterCriticalSection():\n");
-
     /* Start critical section protection */
     os_protectLock (pContext->hOs, pContext->hProtectionLock);
 }
@@ -446,8 +424,6 @@ void context_EnterCriticalSection (TI_HANDLE hContext)
 void context_LeaveCriticalSection (TI_HANDLE hContext)
 {
 	TContext *pContext = (TContext *)hContext;
-
-    TRACE0(pContext->hReport, REPORT_SEVERITY_INFORMATION , "context_LeaveCriticalSection():\n");
 
     /* Stop critical section protection */
     os_protectUnlock (pContext->hOs, pContext->hProtectionLock);
@@ -470,25 +446,6 @@ void context_LeaveCriticalSection (TI_HANDLE hContext)
 
 void context_Print(TI_HANDLE hContext)
 {
-	TContext *pContext = (TContext *)hContext;
-    TI_UINT32 i;
-
-    WLAN_OS_REPORT(("context_Print():  %d Clients Registered:\n", pContext->uNumClients));
-    WLAN_OS_REPORT(("=======================================\n"));
-    WLAN_OS_REPORT(("bContextSwitchRequired = %d\n", pContext->bContextSwitchRequired));
-
-	for (i = 0; i < pContext->uNumClients; i++)
-	{
-		WLAN_OS_REPORT(("Client %d - %s: CbFunc=0x%x, CbHndl=0x%x, Enabled=%d, Pending=%d, Requests=%d, Invoked=%d\n",
-                        i,
-                        pContext->aClientName[i].sName,
-                        pContext->aClientCbFunc[i],
-                        pContext->aClientCbHndl[i],
-                        pContext->aClientEnabled[i],
-                        pContext->aClientPending[i],
-                        pContext->aRequestCount[i],
-                        pContext->aInvokeCount[i] ));
-	}
 }
 
 #endif /* TI_DBG */

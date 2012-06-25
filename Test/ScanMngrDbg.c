@@ -107,7 +107,6 @@ void scanMngrDebugFunction( TI_HANDLE hScanMngr, TI_UINT32 funcType, void *pPara
         break;
 
     default:
-		WLAN_OS_REPORT(("Invalid function type in scan manager debug function: %d\n", funcType));
 		break;
 	}
 }
@@ -121,19 +120,6 @@ void scanMngrDebugFunction( TI_HANDLE hScanMngr, TI_UINT32 funcType, void *pPara
  */
 void printScanMngrDbgFunctions(void)
 {
-    WLAN_OS_REPORT(("   Scan Manager Debug Functions   \n"));
-	WLAN_OS_REPORT(("---------------------------------------\n"));
-	WLAN_OS_REPORT(("1500 - Print the scan manager Debug Help\n"));
-	WLAN_OS_REPORT(("1501 - Start continuous scan\n"));
-	WLAN_OS_REPORT(("1502 - Stop continuous scan\n"));
-    WLAN_OS_REPORT(("1503 - Start immediate scan\n"));
-    WLAN_OS_REPORT(("1504 - Stop immediate scan\n"));
-    WLAN_OS_REPORT(("1505 - Print tracking list\n"));
-    WLAN_OS_REPORT(("1506 - Print statistics\n"));
-    WLAN_OS_REPORT(("1507 - Reset statistics\n"));
-    WLAN_OS_REPORT(("1508 - Print neighbor APs list\n"));
-    WLAN_OS_REPORT(("1509 - Print Scan Policy\n"));
-    WLAN_OS_REPORT(("1510 - Print scan manager object\n"));
 }
 
 /**

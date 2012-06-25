@@ -89,7 +89,6 @@ TI_HANDLE fwDbg_Create (TI_HANDLE hOs)
 
     if (pFwDebug == NULL)
     {
-        WLAN_OS_REPORT (("FATAL ERROR: fwDbg_Create(): Error Creating TFwDebug - Aborting\n"));
         return NULL;
     }
 
@@ -186,7 +185,6 @@ TI_STATUS fwDbg_WriteAddr (TI_HANDLE hFwDebug,
 	/* check if length is large than default threshold */
 	if (Length > DMA_SIZE_BUF)
     {
-TRACE1(pFwDebug->hOs, REPORT_SEVERITY_ERROR, "fwDbg_WriteAddr : Buffer Length too large -- %d",Length);
 		return TXN_STATUS_ERROR;
     }
 
@@ -235,7 +233,6 @@ TI_STATUS fwDbg_ReadAddr (TI_HANDLE hFwDebug,
 	/* check if length is large than default threshold */
 	if (Length > DMA_SIZE_BUF)
 	{
-TRACE1(pFwDebug->hOs, REPORT_SEVERITY_ERROR, "fwDbg_ReadAddr : Buffer Length too large -- %d",Length);
 		return TXN_STATUS_ERROR;
 	}
 

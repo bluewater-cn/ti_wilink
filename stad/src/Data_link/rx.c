@@ -60,7 +60,6 @@
 #include "TWDriver.h"
 #include "RxBuf.h"
 #include "DrvMainModules.h"
-#include "bmtrace_api.h"
 #include "PowerMgr_API.h"
 
 
@@ -133,7 +132,6 @@ TI_HANDLE rxData_create (TI_HANDLE hOs)
     /* check parameters validity */
     if (hOs == NULL)
     {
-        WLAN_OS_REPORT(("FATAL ERROR: rxData_create(): OS handle Error - Aborting\n"));
         return NULL;
     }
 
@@ -143,7 +141,6 @@ TI_HANDLE rxData_create (TI_HANDLE hOs)
 
     if (!pRxData)
     {
-        WLAN_OS_REPORT(("FATAL ERROR: rxData_create(): Error Creating Rx Module - Aborting\n"));
         return NULL;
     }
 
@@ -238,28 +235,15 @@ void rxData_init (TStadHandlesList *pStadHandles)
 TI_STATUS rxData_SetDefaults (TI_HANDLE hRxData, rxDataInitParams_t * rxDataInitParams)
 {
     rxData_t *pRxData = (rxData_t *)hRxData;
-    int i;
 
     /* init rx data filters */
     pRxData->filteringEnabled = rxDataInitParams->rxDataFiltersEnabled;
     pRxData->filteringDefaultAction = rxDataInitParams->rxDataFiltersDefaultAction;
     TWD_CfgEnableRxDataFilter (pRxData->hTWD, pRxData->filteringEnabled, pRxData->filteringDefaultAction);
 
-    for (i = 0; i < MAX_DATA_FILTERS; ++i)
-    {
-        if (rxDataInitParams->rxDataFilterRequests[i].maskLength > 0)
-        {
-            if (rxData_addRxDataFilter(hRxData, &rxDataInitParams->rxDataFilterRequests[i]) != TI_OK)
-            {
-                TRACE1(pRxData->hReport, REPORT_SEVERITY_ERROR, ": Invalid Rx Data Filter configured at init stage (at index %d)!\n", i);
-            }
-        }
-    }
-
 	pRxData->reAuthActiveTimer = tmr_CreateTimer (pRxData->hTimer);
 	if (pRxData->reAuthActiveTimer == NULL)
 	{
-        WLAN_OS_REPORT(("rxData_SetDefaults(): Failed to create reAuthActiveTimer!\n"));
 		return TI_NOK;
 	}
 
@@ -276,14 +260,11 @@ TI_STATUS rxData_SetDefaults (TI_HANDLE hRxData, rxDataInitParams_t * rxDataInit
     pRxData->hThroughputTimer = tmr_CreateTimer (pRxData->hTimer);
     if (pRxData->hThroughputTimer == NULL)
     {
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, "rxData_SetDefaults(): Failed to create hThroughputTimer!\n");
         return TI_NOK;
     }
     pRxData->rxThroughputTimerEnable = TI_FALSE;
   #endif
 
-
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INIT, ".....Rx Data configured successfully\n");
 
     return TI_OK;
 }
@@ -372,8 +353,6 @@ TI_STATUS rxData_stop (TI_HANDLE hRxData)
     }
   #endif
 
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_stop() :  Succeeded.\n");
-
     return TI_OK;
 
 }
@@ -437,7 +416,6 @@ TI_STATUS rxData_getParam(TI_HANDLE hRxData, paramInfo_t *pParamInfo)
             break;
 
         default:
-            TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, " rxData_getParam() : PARAMETER NOT SUPPORTED \n");
             return (PARAM_NOT_SUPPORTED);
     }
 
@@ -506,7 +484,6 @@ TI_STATUS rxData_setParam(TI_HANDLE hRxData, paramInfo_t *pParamInfo)
             break;
 
         default:
-            TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, " rxData_setParam() : PARAMETER NOT SUPPORTED \n");
             return (PARAM_NOT_SUPPORTED);
     }
 
@@ -619,7 +596,6 @@ static void closeFieldPattern (rxData_t * pRxData, rxDataFilterFieldPattern_t * 
         *lenFieldPatterns += fieldPattern->length;
     }
 
-    TRACE3(pRxData->hReport, REPORT_SEVERITY_INFORMATION, ": Closed field pattern, length = %d, total length = %d, pattern bit mask = %d.\n", fieldPattern->length, *lenFieldPatterns, ((fieldPattern->flag & RX_DATA_FILTER_FLAG_USE_BIT_MASK) == RX_DATA_FILTER_FLAG_USE_BIT_MASK));
 }
 
 
@@ -640,8 +616,6 @@ static void closeFieldPattern (rxData_t * pRxData, rxDataFilterFieldPattern_t * 
 ***************************************************************************/
 static int parseRxDataFilterRequest(TI_HANDLE hRxData, TRxDataFilterRequest* request, TI_UINT8 * numFieldPatterns, TI_UINT8 * lenFieldPatterns, TI_UINT8 * fieldPatterns)
 {
-    rxData_t * pRxData = (rxData_t *) hRxData;
-
     int maskIter;
     int patternIter = 0;
 
@@ -658,7 +632,6 @@ static int parseRxDataFilterRequest(TI_HANDLE hRxData, TRxDataFilterRequest* req
         /* is the bit in the mask set */
         TI_BOOL isSet = ((request->mask[byte] & (1 << bit)) == (1 << bit));
 
-        TRACE4(pRxData->hReport, REPORT_SEVERITY_INFORMATION, ": MaskIter = %d, Byte = %d, Bit = %d, isSet = %d\n", maskIter, byte, bit, isSet);
 
         /* if we're in the midst of building a field pattern, we need to close in case */
         /* the current bit is not set or we've reached the ethernet header boundary */
@@ -678,15 +651,11 @@ static int parseRxDataFilterRequest(TI_HANDLE hRxData, TRxDataFilterRequest* req
             /* if not already building a field pattern, create a new one */
             if (isBuildingFieldPattern == TI_FALSE)
             {
-                TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, ": Creating a new field pattern.\n");
-
                 isBuildingFieldPattern = TI_TRUE;
                 ++(*numFieldPatterns);
 
                 if (*numFieldPatterns > RX_DATA_FILTER_MAX_FIELD_PATTERNS)
                 {
-                    TRACE1(pRxData->hReport, REPORT_SEVERITY_ERROR, ": Invalid filter, too many field patterns, maximum of %u is allowed!\n", RX_DATA_FILTER_MAX_FIELD_PATTERNS);
-
                     return TI_NOK;
                 }
 
@@ -707,14 +676,11 @@ static int parseRxDataFilterRequest(TI_HANDLE hRxData, TRxDataFilterRequest* req
                     fieldPattern.offset -= RX_DATA_FILTER_ETHERNET_HEADER_BOUNDARY;
                 }
 
-                TRACE2(pRxData->hReport, REPORT_SEVERITY_INFORMATION, ": offset = %d, flag = %d.\n", fieldPattern.offset, fieldPattern.flag);
             }
 
             /* check that the pattern is long enough */
             if (patternIter > request->patternLength)
             {
-                TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, ": Invalid filter, mask and pattern length are not consistent!\n");
-
                 return TI_NOK;
             }
 
@@ -724,8 +690,6 @@ static int parseRxDataFilterRequest(TI_HANDLE hRxData, TRxDataFilterRequest* req
             /* check pattern matching boundary */
             if (fieldPattern.offset + fieldPattern.length >= RX_DATA_FILTER_FILTER_BOUNDARY)
             {
-                TRACE1(pRxData->hReport, REPORT_SEVERITY_ERROR, ": Invalid filter, pattern matching cannot exceed first %u characters.\n", RX_DATA_FILTER_FILTER_BOUNDARY);
-
                 return TI_NOK;
             }
         }
@@ -734,8 +698,6 @@ static int parseRxDataFilterRequest(TI_HANDLE hRxData, TRxDataFilterRequest* req
     /* check that the pattern is long enough */
     if (patternIter != request->patternLength)
     {
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, ": Invalid filter, mask and pattern lengths are not consistent!\n");
-
         return TI_NOK;
     }
 
@@ -777,8 +739,6 @@ static TI_STATUS rxData_addRxDataFilter (TI_HANDLE hRxData, TRxDataFilterRequest
     /* does the filter already exist? */
     if (findFilterRequest(hRxData, request) >= 0)
     {
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, ": Filter already exists.\n");
-
         return RX_FILTER_ALREADY_EXISTS;
     }
 
@@ -792,12 +752,8 @@ static TI_STATUS rxData_addRxDataFilter (TI_HANDLE hRxData, TRxDataFilterRequest
     /* are all filter slots taken? */
     if (index == MAX_DATA_FILTERS)
     {
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, ": No place to insert filter!\n");
-
         return RX_NO_AVAILABLE_FILTERS;
     }
-
-    TRACE1(pRxData->hReport, REPORT_SEVERITY_INFORMATION, ": Inserting filter at index %d.\n", index);
 
     /* parse the filter request into discrete field patterns */
     if (parseRxDataFilterRequest(hRxData, request, &numFieldPatterns, &lenFieldPatterns, fieldPatterns) != TI_OK)
@@ -846,12 +802,8 @@ static TI_STATUS rxData_removeRxDataFilter (TI_HANDLE hRxData, TRxDataFilterRequ
     /* does the filter exist? */
     if (index < 0)
     {
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_WARNING, ": Remove data filter request received but the specified filter was not found!");
-
         return RX_FILTER_DOES_NOT_EXIST;
     }
-
-    TRACE1(pRxData->hReport, REPORT_SEVERITY_INFORMATION, ": Removing filter at index %d.", index);
 
     pRxData->isFilterSet[index] = TI_FALSE;
 
@@ -945,14 +897,10 @@ void rxData_receivePacketFromWlan (TI_HANDLE hRxData, void *pBuffer, TRxAttr* pR
     TMacAddr        address3;
     dot11_header_t  *pDot11Hdr;
 
-	TRACE1(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_receivePacketFromWlan() : pRxAttr->packetType = %d\n", pRxAttr->ePacketType);
-
     switch (pRxAttr->ePacketType)
     {
     case TAG_CLASS_MANAGEMENT:
     case TAG_CLASS_BCN_PRBRSP:
-
-        TRACE1(pRxData->hReport, REPORT_SEVERITY_INFORMATION, "rxData_receivePacketFromWlan(): Received management Buffer len = %d\n", RX_BUF_LEN(pBuffer));
 
         /* update siteMngr
          *
@@ -966,8 +914,6 @@ void rxData_receivePacketFromWlan (TI_HANDLE hRxData, void *pBuffer, TRxAttr* pR
         /* distribute mgmt pBuffer to mlme */
         if( mlmeParser_recv(pRxData->hMlme, pBuffer, pRxAttr) != TI_OK )
         {
-            // _HTC_ : change the severity to from error to warning
-            TRACE0(pRxData->hReport, REPORT_SEVERITY_WARNING, " rxData_receivePacketFromWlan() : MLME returned error \n");
         }
         break;
 
@@ -976,17 +922,12 @@ void rxData_receivePacketFromWlan (TI_HANDLE hRxData, void *pBuffer, TRxAttr* pR
     case TAG_CLASS_AMSDU:
     case TAG_CLASS_EAPOL:
         {
-            CL_TRACE_START_L3();
-            TRACE1(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_receivePacketFromWlan() : Received Data Buffer len = %d\n", RX_BUF_LEN(pBuffer));
-
             /* send pBuffer to data dispatcher */
             rxData_dataPacketDisptcher(hRxData, pBuffer, pRxAttr);
-            CL_TRACE_END_L3("tiwlan_drv.ko", "INHERIT", "RX", ".DataPacket");
             break;
         }
 
     default:
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, " rxData_receivePacketFromWlan(): Received unspecified packet type !!! \n");
         RxBufFree(pRxData->hOs, pBuffer);
         break;
     }
@@ -1020,8 +961,6 @@ static void rxData_dataPacketDisptcher (TI_HANDLE hRxData, void *pBuffer, TRxAtt
     /* discard data packets received while rx data port is closed */
     if (DataPortStatus == CLOSE)
     {
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_dataPacketDisptcher() : Received Data Buffer while Rx data port is closed \n");
-
         rxData_discardPacket (hRxData, pBuffer, pRxAttr);
         return;
     }
@@ -1033,8 +972,6 @@ static void rxData_dataPacketDisptcher (TI_HANDLE hRxData, void *pBuffer, TRxAtt
 #ifdef XCC_MODULE_INCLUDED
     if (XCCMngr_isIappPacket (pRxData->hXCCMgr, pBuffer) == TI_TRUE)
     {
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_dataPacketDisptcher() : Received Iapp Buffer  \n");
-
         DataPacketType = DATA_IAPP_PACKET;
 
         /* dispatch Buffer according to packet type and current rx data port status */
@@ -1064,15 +1001,11 @@ static void rxData_dataPacketDisptcher (TI_HANDLE hRxData, void *pBuffer, TRxAtt
 
            if (etherType == ETHERTYPE_802_1D)
            {
-               TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_dataPacketDisptcher() : Received VLAN packet  \n");
-
                DataPacketType = DATA_VLAN_PACKET;
            }
            else if ((HTOWLANS(pEthernetHeader->type) == EAPOL_PACKET) ||
 					(HTOWLANS(pEthernetHeader->type) == pRxData->genericEthertype))
            {
-				TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_dataPacketDisptcher() : Received Eapol packet  \n");
-
 				if (rxData_IsReAuthInProgress(pRxData))
 				{
 					/* ReAuth already in progress, restart timer */
@@ -1095,8 +1028,6 @@ static void rxData_dataPacketDisptcher (TI_HANDLE hRxData, void *pBuffer, TRxAtt
            }
            else
            {
-               TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_dataPacketDisptcher() : Received Data packet  \n");
-
                DataPacketType = DATA_DATA_PACKET;
            }
 
@@ -1124,8 +1055,6 @@ static void rxData_discardPacket (TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRx
 {
     rxData_t *pRxData = (rxData_t *)hRxData;
 
-    TRACE2(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_discardPacket: rx port status = %d , Buffer status = %d  \n", pRxData->rxDataPortStatus, pRxAttr->status);
-
     pRxData->rxDataDbgCounters.excludedFrameCounter++;
 
     /* free Buffer */
@@ -1149,8 +1078,6 @@ static void rxData_discardPacket (TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRx
 static void rxData_discardPacketVlan (TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRxAttr)
 {
     rxData_t *pRxData = (rxData_t *)hRxData;
-
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_WARNING, " rxData_discardPacketVlan : drop packet that contains VLAN tag\n");
 
     pRxData->rxDataDbgCounters.rxDroppedDueToVLANIncludedCnt++;
 
@@ -1177,10 +1104,6 @@ static void rxData_rcvPacketInOpenNotify (TI_HANDLE hRxData, void *pBuffer, TRxA
 {
     rxData_t *pRxData = (rxData_t *)hRxData;
 
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, " rxData_rcvPacketInOpenNotify: receiving data packet while in rx port status is open notify\n");
-
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, "rxData_rcvPacketInOpenNotify: ERROR !!! receiving data packet while in rx port status is open notify\n");
-
     pRxData->rxDataDbgCounters.rcvUnicastFrameInOpenNotify++;
 
     /* free Buffer */
@@ -1205,10 +1128,6 @@ static void rxData_rcvPacketInOpenNotify (TI_HANDLE hRxData, void *pBuffer, TRxA
 static void rxData_rcvPacketEapol(TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRxAttr)
 {
     rxData_t *pRxData = (rxData_t *)hRxData;
-
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_rcvPacketEapol() : Received an EAPOL frame tranferred to OS\n");
-
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_rcvPacketEapol() : Received an EAPOL frame tranferred to OS\n");
 
     EvHandlerSendEvent (pRxData->hEvHandler, IPC_EVENT_EAPOL, NULL, 0);
     os_receivePacket (pRxData->hOs, (struct RxIfDescriptor_t*)pBuffer, pBuffer, (TI_UINT16)RX_ETH_PKT_LEN(pBuffer));
@@ -1235,11 +1154,6 @@ static void rxData_rcvPacketData(TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRxA
     TEthernetHeader *pEthernetHeader;
     TI_UINT16 EventMask = 0;
 
-
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_rcvPacketData() : Received DATA frame tranferred to OS\n");
-
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_rcvPacketData() : Received DATA frame tranferred to OS\n");
-
     /* check encryption status */
     pEthernetHeader = (TEthernetHeader *)RX_ETH_PKT_DATA(pBuffer);
     if (!MAC_MULTICAST (pEthernetHeader->dst))
@@ -1248,7 +1162,6 @@ static void rxData_rcvPacketData(TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRxA
         {
             pRxData->rxDataDbgCounters.excludedFrameCounter++;
             /* free Buffer */
-            TRACE0(pRxData->hReport, REPORT_SEVERITY_WARNING, " rxData_rcvPacketData() : exclude unicast unencrypted is TI_TRUE & packet encryption is OFF\n");
 
             RxBufFree(pRxData->hOs, pBuffer);
             return;
@@ -1260,7 +1173,6 @@ static void rxData_rcvPacketData(TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRxA
         {
             pRxData->rxDataDbgCounters.excludedFrameCounter++;
             /* free Buffer */
-            TRACE0(pRxData->hReport, REPORT_SEVERITY_WARNING, " rxData_rcvPacketData() : exclude broadcast unencrypted is TI_TRUE & packet encryption is OFF\n");
 
             RxBufFree(pRxData->hOs, pBuffer);
             return;
@@ -1300,7 +1212,6 @@ static void rxData_rcvPacketData(TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRxA
     /*Handle PREAUTH_EAPOL_PACKET*/
     if (HTOWLANS(pEthernetHeader->type) == PREAUTH_EAPOL_PACKET)
     {
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_rcvPacketData() : Received an Pre-Auth EAPOL frame tranferred to OS\n");
     }
 
     rxData_DistributorRxEvent (pRxData, EventMask, RX_ETH_PKT_LEN(pBuffer));
@@ -1329,10 +1240,6 @@ static void rxData_rcvPacketData(TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRxA
 static void rxData_rcvPacketIapp(TI_HANDLE hRxData, void *pBuffer, TRxAttr* pRxAttr)
 {
     rxData_t *pRxData = (rxData_t *)hRxData;
-
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_rcvPacketIapp() : Received IAPP frame tranferred to XCCMgr\n");
-
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_rcvPacketIapp() : Received IAPP frame tranferred to XCCMgr\n");
 
     /* tranfer packet to XCCMgr */
     XCCMngr_recvIAPPPacket (pRxData->hXCCMgr, pBuffer, pRxAttr);
@@ -1499,8 +1406,6 @@ static TI_STATUS rxData_ConvertAmsduToEthPackets (TI_HANDLE hRxData, void *pBuff
     /* ETH length, in A-MSDU the MSDU header type contain the MSDU length and not the type */
     uDataLen = WLANTOHS(pMsduEthHeader->type);
 
-    TRACE1(pRxData->hReport, REPORT_SEVERITY_INFORMATION, "rxData_ConvertAmsduToEthPackets(): A-MSDU received in length %d \n",uAmsduDataLen);
-
     /* if we have another packet at the AMSDU */
     while((uDataLen < uAmsduDataLen) && (uAmsduDataLen > ETHERNET_HDR_LEN + FCS_SIZE))
     {
@@ -1509,7 +1414,6 @@ static TI_STATUS rxData_ConvertAmsduToEthPackets (TI_HANDLE hRxData, void *pBuff
         rxData_RequestForBuffer (hRxData, &pDataBuf, sizeof(RxIfDescriptor_t) + WLAN_SNAP_HDR_LEN + ETHERNET_HDR_LEN + uDataLen, 0, TAG_CLASS_AMSDU);
         if (NULL == pDataBuf)
         {
-            TRACE1(pRxData->hReport, REPORT_SEVERITY_ERROR, "rxData_ConvertAmsduToEthPackets(): cannot alloc MSDU packet. length %d \n",uDataLen);
             rxData_discardPacket (hRxData, pBuffer, pRxAttr);
             return TI_NOK;
         }
@@ -1549,20 +1453,14 @@ static TI_STATUS rxData_ConvertAmsduToEthPackets (TI_HANDLE hRxData, void *pBuff
         /* set the packet type */
         if (swapedTypeLength == ETHERTYPE_802_1D)
         {
-            TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_ConvertAmsduToEthPackets() : Received VLAN Buffer  \n");
-
             DataPacketType = DATA_VLAN_PACKET;
         }
         else if (HTOWLANS(pEthHeader->type) == EAPOL_PACKET)
         {
-            TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_ConvertAmsduToEthPackets() : Received Eapol pBuffer  \n");
-
             DataPacketType = DATA_EAPOL_PACKET;
         }
         else
         {
-            TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, " rxData_ConvertAmsduToEthPackets() : Received Data pBuffer  \n");
-
             DataPacketType = DATA_DATA_PACKET;
         }
 
@@ -1601,8 +1499,6 @@ static TI_STATUS rxData_ConvertAmsduToEthPackets (TI_HANDLE hRxData, void *pBuff
     } /* while end */
 
 
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION, "rxData_ConvertAmsduToEthPackets(): A-MSDU Packe conversion done.\n");
-
     /* free the A-MSDU packet */
     RxBufFree(pRxData->hOs, pBuffer);
 
@@ -1628,7 +1524,6 @@ static void rxData_ReceivePacket (TI_HANDLE   hRxData,
 {
     rxData_t            *pRxData    = (rxData_t *)hRxData;
 
-    TRACE1(pRxData->hReport, REPORT_SEVERITY_INFORMATION, "rxData_ReceivePacket: Received BUF %x\n", pBuffer);
 
     if (pBuffer)
     {
@@ -1655,7 +1550,6 @@ static void rxData_ReceivePacket (TI_HANDLE   hRxData,
                 /* This error is not important before the Connection, so we ignore it when portStatus is not OPEN */
                 if (pRxData->rxDataPortStatus == OPEN)
                 {
-                    TRACE0(pRxData->hReport, REPORT_SEVERITY_WARNING, "rxData_ReceivePacket: Received Packet with RX_DESC_DECRYPT_FAIL\n");
                 }
 
                 RxBufFree(pRxData->hOs, pBuffer);
@@ -1674,13 +1568,11 @@ static void rxData_ReceivePacket (TI_HANDLE   hRxData,
                 if (MAC_MULTICAST(*pMac) || Param.content.siteMgrCurrentBSSType == BSS_INDEPENDENT)
                 {
                     uKeyType = (TI_UINT8)KEY_TKIP_MIC_GROUP;
-	                TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, "rxData_ReceivePacket: Received Packet MIC failure. Type = Group\n");
                 }
                 /* Unicast on infrastructure */
                 else
                 {
                     uKeyType = (TI_UINT8)KEY_TKIP_MIC_PAIRWISE;
-	                TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, "rxData_ReceivePacket: Received Packet MIC failure. Type = Pairwise\n");
                 }
 
 
@@ -1692,7 +1584,6 @@ static void rxData_ReceivePacket (TI_HANDLE   hRxData,
             case RX_DESC_STATUS_DRIVER_RX_Q_FAIL:
             {
                 /* Rx queue error - free packet and return */
-                TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR, "rxData_ReceivePacket: Received Packet with Rx queue error \n");
 
                 RxBufFree(pRxData->hOs, pBuffer);
                 return;
@@ -1700,17 +1591,14 @@ static void rxData_ReceivePacket (TI_HANDLE   hRxData,
 
             default:
                     /* Unknown error - free packet and return */
-                    TRACE1(pRxData->hReport, REPORT_SEVERITY_ERROR, "rxData_ReceivePacket: Received Packet with unknown status = %d\n", (pRxParams->status & RX_DESC_STATUS_MASK));
 
                     RxBufFree(pRxData->hOs, pBuffer);
                     return;
             }
 
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION , "Receive good Packet\n");
 
         if (rate_PolicyToDrv (pRxParams->rate, &appRate) != TI_OK)
         {
-            TRACE1(pRxData->hReport, REPORT_SEVERITY_ERROR , "rxData_ReceivePacket: can't convert hwRate=0x%x\n", pRxParams->rate);
         }
 
         /*
@@ -1735,7 +1623,6 @@ static void rxData_ReceivePacket (TI_HANDLE   hRxData,
                        sizeof(pRxParams->timestamp) );
         RxAttr.TimeStamp = ENDIAN_HANDLE_LONG(RxAttr.TimeStamp);
 
-        TRACE8(pRxData->hReport, REPORT_SEVERITY_INFORMATION, "rxData_ReceivePacket: channel=%d, info=0x%x, type=%d, rate=0x%x, RSSI=%d, SNR=%d, status=%d, scan tag=%d\n", RxAttr.channel, RxAttr.packetInfo, RxAttr.ePacketType, RxAttr.Rate, RxAttr.Rssi, RxAttr.SNR, RxAttr.status, RxAttr.eScanTag);
 
         rxData_receivePacketFromWlan (hRxData, pBuffer, &RxAttr);
 
@@ -1745,7 +1632,6 @@ static void rxData_ReceivePacket (TI_HANDLE   hRxData,
     }
     else
     {
-        TRACE0(pRxData->hReport, REPORT_SEVERITY_ERROR , "rxData_ReceivePacket: null Buffer received");
     }
 }
 
@@ -1769,8 +1655,6 @@ static ERxBufferStatus rxData_RequestForBuffer (TI_HANDLE   hRxData,
                                       PacketClassTag_e ePacketClassTag)
 {
     rxData_t *pRxData = (rxData_t *)hRxData;
-
-    TRACE1(pRxData->hReport, REPORT_SEVERITY_INFORMATION , " RequestForBuffer, length = %d \n",aLength);
 
     *pBuf = RxBufAlloc (pRxData->hOs, aLength, ePacketClassTag);
 
@@ -1834,49 +1718,11 @@ void rxData_resetDbgCounters(TI_HANDLE hRxData)
 ***************************************************************************/
 void rxData_printRxCounters (TI_HANDLE hRxData)
 {
-    rxData_t *pRxData = (rxData_t *)hRxData;
-
-    if (pRxData)
-    {
-        WLAN_OS_REPORT(("RecvOk = %d\n", pRxData->rxDataCounters.RecvOk));
-        WLAN_OS_REPORT(("DirectedBytesRecv = %d\n", pRxData->rxDataCounters.DirectedBytesRecv));
-        WLAN_OS_REPORT(("DirectedFramesRecv = %d\n", pRxData->rxDataCounters.DirectedFramesRecv));
-        WLAN_OS_REPORT(("MulticastBytesRecv = %d\n", pRxData->rxDataCounters.MulticastBytesRecv));
-        WLAN_OS_REPORT(("MulticastFramesRecv = %d\n", pRxData->rxDataCounters.MulticastFramesRecv));
-        WLAN_OS_REPORT(("BroadcastBytesRecv = %d\n", pRxData->rxDataCounters.BroadcastBytesRecv));
-        WLAN_OS_REPORT(("BroadcastFramesRecv = %d\n", pRxData->rxDataCounters.BroadcastFramesRecv));
-
-        /* debug counters */
-        WLAN_OS_REPORT(("excludedFrameCounter = %d\n", pRxData->rxDataDbgCounters.excludedFrameCounter));
-        WLAN_OS_REPORT(("rxDroppedDueToVLANIncludedCnt = %d\n", pRxData->rxDataDbgCounters.rxDroppedDueToVLANIncludedCnt));
-        WLAN_OS_REPORT(("rxWrongBssTypeCounter = %d\n", pRxData->rxDataDbgCounters.rxWrongBssTypeCounter));
-        WLAN_OS_REPORT(("rxWrongBssIdCounter = %d\n", pRxData->rxDataDbgCounters.rxWrongBssIdCounter));
-        WLAN_OS_REPORT(("rcvUnicastFrameInOpenNotify = %d\n", pRxData->rxDataDbgCounters.rcvUnicastFrameInOpenNotify));
-    }
 }
 
 
 void rxData_printRxBlock(TI_HANDLE hRxData)
 {
-    rxData_t *pRxData = (rxData_t *)hRxData;
-
-    WLAN_OS_REPORT(("hCtrlData = 0x%X\n", pRxData->hCtrlData));
-    WLAN_OS_REPORT(("hMlme = 0x%X\n", pRxData->hMlme));
-    WLAN_OS_REPORT(("hOs = 0x%X\n", pRxData->hOs));
-    WLAN_OS_REPORT(("hReport = 0x%X\n", pRxData->hReport));
-    WLAN_OS_REPORT(("hRsn = 0x%X\n", pRxData->hRsn));
-    WLAN_OS_REPORT(("hSiteMgr = 0x%X\n", pRxData->hSiteMgr));
-
-    WLAN_OS_REPORT(("hCtrlData = 0x%X\n", pRxData->hCtrlData));
-    WLAN_OS_REPORT(("hMlme = 0x%X\n", pRxData->hMlme));
-    WLAN_OS_REPORT(("hOs = 0x%X\n", pRxData->hOs));
-    WLAN_OS_REPORT(("hReport = 0x%X\n", pRxData->hReport));
-    WLAN_OS_REPORT(("hRsn = 0x%X\n", pRxData->hRsn));
-    WLAN_OS_REPORT(("hSiteMgr = 0x%X\n", pRxData->hSiteMgr));
-
-    WLAN_OS_REPORT(("rxDataPortStatus = %d\n", pRxData->rxDataPortStatus));
-    WLAN_OS_REPORT(("rxDataExcludeUnencrypted = %d\n", pRxData->rxDataExcludeUnencrypted));
-    WLAN_OS_REPORT(("rxDataEapolDestination = %d\n", pRxData->rxDataEapolDestination));
 }
 
 
@@ -1917,10 +1763,6 @@ static void rxData_printRxThroughput (TI_HANDLE hRxData, TI_BOOL bTwdInitOccured
 {
     rxData_t *pRxData = (rxData_t *)hRxData;
 
-    WLAN_OS_REPORT (("\n"));
-    WLAN_OS_REPORT (("-------------- Rx Throughput Statistics ---------------\n"));
-    WLAN_OS_REPORT (("Throughput = %d KBits/sec\n", pRxData->rxDataCounters.LastSecBytesRecv * 8 / 1024));
-
     /* reset throughput counter */
     pRxData->rxDataCounters.LastSecBytesRecv = 0;
 }
@@ -1934,13 +1776,8 @@ void rxData_printRxDataFilter (TI_HANDLE hRxData)
      {
         if (pRxData->isFilterSet[index])
         {
-            WLAN_OS_REPORT (("index=%d, pattern & mask\n", index));
             report_PrintDump(pRxData->filterRequests[index].pattern, pRxData->filterRequests[index].patternLength);
             report_PrintDump(pRxData->filterRequests[index].mask, pRxData->filterRequests[index].maskLength);
-        }
-        else
-        {
-            WLAN_OS_REPORT (("No Filter defined for index-%d\n", index));
         }
      }
 }
@@ -1962,8 +1799,6 @@ void rxData_printRxDataFilter (TI_HANDLE hRxData)
 void rxData_SetReAuthInProgress(TI_HANDLE hRxData, TI_BOOL	value)
 {
 	rxData_t *pRxData = (rxData_t *)hRxData;
-
-	TRACE1(pRxData->hReport, REPORT_SEVERITY_INFORMATION , "Set ReAuth flag to %d\n", value);
 
 	pRxData->reAuthInProgress = value;
 }
@@ -1999,7 +1834,6 @@ TI_BOOL rxData_IsReAuthInProgress(TI_HANDLE hRxData)
 static void rxData_StartReAuthActiveTimer(TI_HANDLE hRxData)
 {
 	rxData_t *pRxData = (rxData_t *)hRxData;
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION , "Start ReAuth Active Timer\n");
     tmr_StartTimer (pRxData->reAuthActiveTimer,
                     reAuthTimeout,
                     (TI_HANDLE)pRxData,
@@ -2021,7 +1855,6 @@ static void rxData_StartReAuthActiveTimer(TI_HANDLE hRxData)
 void rxData_StopReAuthActiveTimer(TI_HANDLE hRxData)
 {
 	rxData_t *pRxData = (rxData_t *)hRxData;
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION , "Stop ReAuth Active Timer\n");
     tmr_StopTimer (pRxData->reAuthActiveTimer);
 }
 
@@ -2042,7 +1875,6 @@ static void reAuthTimeout(TI_HANDLE hRxData, TI_BOOL bTwdInitOccured)
 {
 	rxData_t *pRxData = (rxData_t *)hRxData;
 
-    TRACE0(pRxData->hReport, REPORT_SEVERITY_INFORMATION , "ReAuth Active Timeout\n");
 	rxData_SetReAuthInProgress(pRxData, TI_FALSE);
 	rxData_ReauthDisablePriority(pRxData);
     EvHandlerSendEvent(pRxData->hEvHandler, IPC_EVENT_RE_AUTH_TERMINATED, NULL, 0);

@@ -132,7 +132,6 @@ TI_STATUS mainSecKeysOnly_config(mainSec_t *pMainSec,
 						MAIN_SEC_KEYS_ONLY_NUM_STATES, MAIN_SEC_KEYS_ONLY_NUM_EVENTS, NULL, pMainSec->hOs);
 	if (status != TI_OK)
 	{
-TRACE0(pMainSec->hReport, REPORT_SEVERITY_ERROR, "MAIN_SEC_SM: Error in configuring full SM\n");
 		return status;
 	}
 
@@ -148,8 +147,6 @@ TRACE0(pMainSec->hReport, REPORT_SEVERITY_ERROR, "MAIN_SEC_SM: Error in configur
 	pMainSec->getAuthIdentity  		= (mainSecSm_getAuthIdentity_t)mainSecKeysOnly_unexpected;
 	pMainSec->setAuthIdentity  		= (mainSecSm_getAuthIdentity_t)mainSecKeysOnly_setAuthIdentity;
     pMainSec->reportAuthFailure     = (mainSecSm_reportAuthFailure_t)mainSecKeysOnly_reportAuthFailure;
-    
-    TRACE0(pMainSec->hReport, REPORT_SEVERITY_INFORMATION, "mainSecKeysOnly_config\n");
 
     return TI_OK;
 }
@@ -236,7 +233,6 @@ TI_STATUS mainSecKeysOnly_reportKeysStatus(mainSec_t *pMainSec, TI_STATUS keysSt
 	{
 		status = fsm_Event(pMainSec->pMainSecSm, &pMainSec->currentState, MAIN_KO_EVENT_KEYS_COMPLETE, pMainSec);
 	} else {
-TRACE0(pMainSec->hReport, REPORT_SEVERITY_ERROR, "MAIN_SEC_SM: Error in Keys\n");
 		status  = TI_OK;
 	}
 
@@ -303,7 +299,6 @@ TI_STATUS mainSecKeysOnly_startIdle(struct _mainSec_t *pMainSec)
 {
     TI_STATUS		status = TI_OK;
 
-TRACE0(pMainSec->hReport, REPORT_SEVERITY_SM, "MAIN_SEC_SM: mainSecKeysOnly_StartIdle...\n");
 	status =  pMainSec->pMainKeys->start(pMainSec->pMainKeys);
 	
 	return status;
@@ -313,7 +308,6 @@ TI_STATUS mainSecKeysOnly_stopStart(struct _mainSec_t *pMainSec)
 {
     TI_STATUS		status = TI_OK;
 
-TRACE0(pMainSec->hReport, REPORT_SEVERITY_SM, "MAIN_SEC_SM: mainSecKeysOnly_StopStart...\n");
 	status =  pMainSec->pMainKeys->stop(pMainSec->pMainKeys);
 
 	return status;
@@ -323,7 +317,6 @@ TI_STATUS mainSecKeysOnly_keysCompleteStart(struct _mainSec_t *pMainSec)
 {
     TI_STATUS		status = TI_OK;
 
-TRACE0(pMainSec->hReport, REPORT_SEVERITY_SM, "MAIN_SEC_SM: mainSecKeysOnly_KeysCompleteAuthenticated...\n");
 	status =  pMainSec->pParent->reportStatus(pMainSec->pParent, pMainSec->data.status);
 	
 	return(status);
@@ -340,7 +333,6 @@ TI_STATUS mainSecKeysOnly_stopAuthorized(struct _mainSec_t *pMainSec)
 {
     TI_STATUS		status = TI_OK;
 
-TRACE0(pMainSec->hReport, REPORT_SEVERITY_SM, "MAIN_SEC_SM: mainSecKeysOnly_StopAuthorized...\n");
 	status =  pMainSec->pMainKeys->stop(pMainSec->pMainKeys);
 	
 	return(status);
@@ -350,7 +342,6 @@ TI_STATUS mainSecKeysOnly_stopNonAuthorized(struct _mainSec_t *pMainSec)
 {
     TI_STATUS		status = TI_OK;
 
-TRACE0(pMainSec->hReport, REPORT_SEVERITY_SM, "MAIN_SEC_SM: mainSecKeysOnly_StopNonAuthorized...\n");
 	status =  pMainSec->pMainKeys->stop(pMainSec->pMainKeys);
 	
 	return(status);

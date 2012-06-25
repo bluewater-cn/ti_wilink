@@ -100,7 +100,6 @@ TI_HANDLE tmr_Create (TI_HANDLE hOs)
 	
 	if (!hTimerModule)
 	{
-		WLAN_OS_REPORT (("tmr_Create():  Allocation failed!!\n"));
 		return NULL;
 	}
 	
@@ -128,7 +127,6 @@ TI_STATUS tmr_Destroy (TI_HANDLE hTimerModule)
     /* Alert if there are still timers that were not destroyed */
     if (pTimerModule->uTimersCount)
     {
-		WLAN_OS_REPORT (("tmr_Destroy():  ERROR - Destroying Timer module but not all timers were destroyed!!\n"));
     }
 
     /* Clear queues (critical section is used inside these functions) */
@@ -269,7 +267,6 @@ void tmr_UpdateDriverState (TI_HANDLE hTimerModule, TI_BOOL bOperState)
 
     if (bOperState == pTimerModule->bOperState) 
     {
-        TRACE1(pTimerModule->hReport, REPORT_SEVERITY_ERROR, "tmr_UpdateDriverState(): New bOperState (%d) is as current!\n", bOperState);
         return;
     }
 
@@ -322,7 +319,6 @@ TI_HANDLE tmr_CreateTimer (TI_HANDLE hTimerModule)
 	pTimerInfo = os_memoryAlloc (pTimerModule->hOs, sizeof(TTimerInfo));
 	if (!pTimerInfo)
 	{
-		WLAN_OS_REPORT (("tmr_CreateTimer():  Timer allocation failed!!\n"));
 		return NULL;
 	}
     os_memoryZero (pTimerModule->hOs, pTimerInfo, (sizeof(TTimerInfo)));
@@ -331,9 +327,7 @@ TI_HANDLE tmr_CreateTimer (TI_HANDLE hTimerModule)
     pTimerInfo->hOsTimerObj = os_timerCreate(pTimerModule->hOs, tmr_GetExpiry, (TI_HANDLE)pTimerInfo);
 	if (!pTimerInfo->hOsTimerObj)
 	{
-        TRACE0(pTimerModule->hReport, REPORT_SEVERITY_CONSOLE ,"tmr_CreateTimer():  OS-API Timer allocation failed!!\n");
         os_memoryFree (pTimerModule->hOs, pTimerInfo, sizeof(TTimerInfo));
-        WLAN_OS_REPORT (("tmr_CreateTimer():  OS-API Timer allocation failed!!\n"));
 		return NULL;
 	}
 
@@ -574,27 +568,15 @@ void tmr_PrintModule (TI_HANDLE hTimerModule)
 {
 	TTimerModule *pTimerModule = (TTimerModule *)hTimerModule;
 
-    /* Print module parameters */
-    WLAN_OS_REPORT(("tmr_PrintModule(): uContextId=%d, bOperState=%d, uTwdInitCount=%d, uTimersCount=%d\n", 
-        pTimerModule->uContextId, pTimerModule->bOperState, 
-        pTimerModule->uTwdInitCount, pTimerModule->uTimersCount));
-
     /* Print Init Queue Info */
-    WLAN_OS_REPORT(("tmr_PrintModule(): Init-Queue:\n")); 
     que_Print(pTimerModule->hInitQueue);
 
     /* Print Operational Queue Info */
-    WLAN_OS_REPORT(("tmr_PrintModule(): Operational-Queue:\n")); 
     que_Print(pTimerModule->hOperQueue);
 }
 
 void tmr_PrintTimer (TI_HANDLE hTimerInfo)
 {
-    TTimerInfo   *pTimerInfo   = (TTimerInfo *)hTimerInfo;                 /* The timer handle */     
-
-    WLAN_OS_REPORT(("tmr_PrintTimer(): uIntervalMs=%d, bPeriodic=%d, bOperStateWhenStarted=%d, uTwdInitCountWhenStarted=%d, hOsTimerObj=0x%x, fExpiryCbFunc=0x%x\n", 
-        pTimerInfo->uIntervalMsec, pTimerInfo->bPeriodic, pTimerInfo->bOperStateWhenStarted, 
-        pTimerInfo->uTwdInitCountWhenStarted, pTimerInfo->hOsTimerObj, pTimerInfo->fExpiryCbFunc));
 }
 
 #endif /* TI_DBG */

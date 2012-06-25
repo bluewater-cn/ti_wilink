@@ -135,10 +135,6 @@ TI_STATUS measurementMgr_getBasicMeasurementParam(TI_HANDLE hMeasurementMgr,
 	}
 	
 	/*FIXME*/
-	WLAN_OS_REPORT(("-------------- FW total---------------, %d\n\n", 
-                    pAcxStatisitics->FWpacketReceived));
-	WLAN_OS_REPORT(("-------------- Driver Total---------------, %d\n\n", 
-                    pAcxStatisitics->HALpacketReceived));
 
     /*******************************************************
     * NOTE: If not using a call back function the required *
@@ -332,14 +328,11 @@ TI_STATUS measurementMgr_dot11hBuildRejectReport(TI_HANDLE hMeasurementMgr,
 	
 		default:
 		{
-TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "Reject reason is not supported, %d\n\n", rejectReason);
-
 			break;
 		}
 	}
 	
 	measurementReport.measurementMode = measurementMode;
-TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_WARNING, "Measurement was rejected due to %d,\n\n", rejectReason);
 
 	/* Note: The Measurement report reject frame body includes 8 TI_UINT8 */
 	return mlmeBuilder_sendFrame(pMeasurementMgr->hMlme,ACTION,(TI_UINT8*)&measurementReport,8,0);
@@ -507,9 +500,6 @@ static void buildMapSubFieldForBasicReport(TI_HANDLE hMeasurementMgr,TI_UINT8* m
 	deltaHALReceivedPacked = pMeasurementMgr->acxStatisticEnd.HALpacketReceived - 
                              pMeasurementMgr->acxStatisticStart.HALpacketReceived; 
 	
-	if(deltaHALReceivedPacked < 0)
-TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "HAL delta packets is negative , %d\n\n", deltaHALReceivedPacked);
-	
 	if(deltaHALReceivedPacked != 0 )
 		*map = DOT11_BSS_ONLY;
 	else
@@ -517,18 +507,8 @@ TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "HAL delta packets is ne
 		/* Calculating the delta for FCS Error*/
 		deltaFWReceivedPacked = pMeasurementMgr->acxStatisticEnd.FWpacketReceived - 
                                 pMeasurementMgr->acxStatisticStart.FWpacketReceived;
-		
-		if(deltaFWReceivedPacked < 0)
-        {
-TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "FW delta packets is negative , %d\n\n", deltaFWReceivedPacked);
-        }
 
 		deltaFCSError = deltaFWReceivedPacked - deltaHALReceivedPacked;
-		
-		if(deltaFCSError < 0)
-        {
-TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "FCS error is negative , %d\n\n", deltaFCSError);
-        }
 
 		if(deltaFCSError != 0 )
 			*map = DOT11_OFDM_ONLY;
@@ -538,18 +518,8 @@ TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "FCS error is negative ,
 			occupancyDelta = pMeasurementMgr->mediumOccupancyEnd.MediumUsage - 
                              pMeasurementMgr->mediumOccupancyStart.MediumUsage;
 
-			if(occupancyDelta < 0)
-            {
-TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "Medium Occupancy is negative , %d\n\n", occupancyDelta);
-            }
-
 			periodTimeDelta = pMeasurementMgr->mediumOccupancyEnd.Period - 
                               pMeasurementMgr->mediumOccupancyStart.Period;
-			
-			if(periodTimeDelta < 0)
-            {
-TRACE1(pMeasurementMgr->hReport, REPORT_SEVERITY_ERROR, "Period time delta is negative , %d\n\n", periodTimeDelta);
-            }
 			
 			if( ((occupancyDelta * 100) / periodTimeDelta)  > RADAR_THRESHOLD_IN_PRECENTS )
 				*map = DOT11_RADAR_AND_UNIDENTIFIED;

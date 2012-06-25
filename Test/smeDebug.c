@@ -107,7 +107,6 @@ void smeDebugFunction (TI_HANDLE hSme, TI_UINT32 funcType, void *pParam)
 	break;
 
 	default:
-   		WLAN_OS_REPORT(("Invalid function type in SME debug function: %d\n", funcType));
         break;
     }
 }
@@ -155,25 +154,6 @@ int sme_memcmp(char* s1, char* s2, int n)
  */
 void printSmeDbgFunctions(void)
 {
-    WLAN_OS_REPORT(("   SME Debug Functions   \n"));
-	WLAN_OS_REPORT(("-------------------------\n"));
-	WLAN_OS_REPORT(("1900 - Print the SME Debug Help\n"));
-	WLAN_OS_REPORT(("1901 - Print the SME object\n"));
-	WLAN_OS_REPORT(("1902 - Print the SME statistics\n"));
-    WLAN_OS_REPORT(("1903 - Reset the SME statistics\n"));
-	WLAN_OS_REPORT(("1904 - Print BSSID list\n"));
-}
-
-
-static TI_UINT8 Freq2Chan(TI_UINT32 freq)
-{
-    TI_UINT32 i;
-
-    for(i=0; i<CHAN_FREQ_TABLE_SIZE; i++)
-        if(ChanFreq[i].freq == freq) 
-            return ChanFreq[i].chan;
-
-    return 0;
 }
 
 static void PrintBssidList(OS_802_11_BSSID_LIST_EX* bssidList, TI_UINT32 IsFullPrint, TMacAddr CurrentBssid)
@@ -182,8 +162,6 @@ static void PrintBssidList(OS_802_11_BSSID_LIST_EX* bssidList, TI_UINT32 IsFullP
     TI_INT8  connectionTypeStr[50];
     POS_802_11_BSSID_EX pBssid = &bssidList->Bssid[0];
 
-    WLAN_OS_REPORT(("BssId List: Num=%u\n", bssidList->NumberOfItems));
-    WLAN_OS_REPORT(("         MAC        Privacy Rssi  Mode    Channel    SSID\n"));
     for(i=0; i<bssidList->NumberOfItems; i++)
     {            
         switch (pBssid->InfrastructureMode)
@@ -201,24 +179,9 @@ static void PrintBssidList(OS_802_11_BSSID_LIST_EX* bssidList, TI_UINT32 IsFullP
                 sme_strcpy (connectionTypeStr, " --- ");
                 break;
         }
-        WLAN_OS_REPORT(("%s%02x.%02x.%02x.%02x.%02x.%02x   %3u   %4d   %s %6d       %s\n",
-            (!sme_memcmp(CurrentBssid, pBssid->MacAddress, MAC_ADDR_LEN))?"*":" ",
-            pBssid->MacAddress[0],
-            pBssid->MacAddress[1],
-            pBssid->MacAddress[2],
-            pBssid->MacAddress[3],
-            pBssid->MacAddress[4],
-            pBssid->MacAddress[5],
-            pBssid->Privacy, 
-            pBssid->Rssi,
-            connectionTypeStr,
-            Freq2Chan(pBssid->Configuration.Union.channel),
-            (pBssid->Ssid.Ssid[0] == '\0')?(TI_INT8*)"****":((TI_INT8*)pBssid->Ssid.Ssid) ));
 
         if (IsFullPrint)
         {
-            WLAN_OS_REPORT(("   BeaconInterval %d\n",  pBssid->Configuration.BeaconPeriod));
-            WLAN_OS_REPORT(("   Capabilities   0x%x\n",  pBssid->Capabilities));
         }
 #ifdef _WINDOWS /*temp fix until bringing the dual OS fix*/
 		pBssid = (POS_802_11_BSSID_EX)((TI_INT8*)pBssid + (pBssid->Length ? pBssid->Length : sizeof(OS_802_11_BSSID_EX)));
@@ -241,7 +204,6 @@ void sme_printBssidList(TI_HANDLE hSme)
 
 	if(!blist) 
     {
-		WLAN_OS_REPORT(("ERROR. sme_printBssidList(): Cannot allocate memory!! length = %d\n", length));
 		return;
 	}
 
@@ -263,7 +225,6 @@ void sme_printBssidList(TI_HANDLE hSme)
  */
 void sme_dbgPrintObject (TI_HANDLE hSme)
 {
-    WLAN_OS_REPORT(("Not yet implemented!\n"));
 }
 
 /** 
@@ -277,7 +238,6 @@ void sme_dbgPrintObject (TI_HANDLE hSme)
  */
 void sme_printStats (TI_HANDLE hSme)
 {
-    WLAN_OS_REPORT(("Not yet implemented!\n"));
 }
 
 /** 
@@ -291,6 +251,5 @@ void sme_printStats (TI_HANDLE hSme)
  */
 void sme_resetStats(TI_HANDLE hSme)
 {
-    WLAN_OS_REPORT(("Not yet implemented!\n"));
 }
 

@@ -152,17 +152,14 @@ void rxTxDebugFunction(TI_HANDLE hRxTxHandle, TI_UINT32 funcType, void *pParam)
 	 *  ===================
 	 */
 	case PRINT_RX_BLOCK:
-		WLAN_OS_REPORT(("RX DBG - Print Rx Block \n\n"));
 		rxData_printRxBlock(hRxTxHandle);
 		break;
 
 	case PRINT_RX_COUNTERS:
-		WLAN_OS_REPORT(("RX DBG - Print Rx counters \n\n"));
 		rxData_printRxCounters(hRxTxHandle);
 		break;
 
 	case RESET_RX_COUNTERS:
-		WLAN_OS_REPORT(("RX DBG - Reset Rx counters \n\n"));
 		rxData_resetCounters(hRxTxHandle);
 		rxData_resetDbgCounters(hRxTxHandle);
 		break;
@@ -176,7 +173,6 @@ void rxTxDebugFunction(TI_HANDLE hRxTxHandle, TI_UINT32 funcType, void *pParam)
 		break;
 
 	default:
-		WLAN_OS_REPORT(("Invalid function type in Debug Tx Function Command: %d\n\n", funcType));
 		break;
 	}
 }
@@ -184,35 +180,6 @@ void rxTxDebugFunction(TI_HANDLE hRxTxHandle, TI_UINT32 funcType, void *pParam)
 
 void printTxRxDbgFunctions(void)
 {
-	WLAN_OS_REPORT(("\n          Tx Dbg Functions   \n"));
-	WLAN_OS_REPORT(("--------------------------------------\n"));
-
-	WLAN_OS_REPORT(("301 - Print TxCtrl info.\n"));
-	WLAN_OS_REPORT(("302 - Print TxCtrl Statistics.\n"));
-	WLAN_OS_REPORT(("303 - Print TxDataQueue info.\n"));
-	WLAN_OS_REPORT(("304 - Print TxDataQueue Statistics.\n"));
-	WLAN_OS_REPORT(("305 - Print TxMgmtQueue info.\n"));
-	WLAN_OS_REPORT(("306 - Print TxMgmtQueue Statistics.\n"));
-	WLAN_OS_REPORT(("307 - Print TxCtrlBlk table.\n"));
-	WLAN_OS_REPORT(("308 - Print TxHwQueue info.\n"));
-	WLAN_OS_REPORT(("309 - Print TxXfer info.\n"));
-	WLAN_OS_REPORT(("310 - Print TxResult info.\n"));
-	WLAN_OS_REPORT(("311 - Print TxDataClsfr Classifier Table.\n"));
-
-	WLAN_OS_REPORT(("320 - Reset TxCtrl Statistics.\n"));
-	WLAN_OS_REPORT(("321 - Reset TxDataQueue Statistics.\n"));
-	WLAN_OS_REPORT(("322 - Reset TxDataClsfr Classifier Table.\n"));
-	WLAN_OS_REPORT(("323 - Reset TxMgmtQueue Statistics.\n"));
-	WLAN_OS_REPORT(("324 - Reset TxResult Statistics.\n"));
-	WLAN_OS_REPORT(("325 - Reset TxXfer Statistics.\n"));
-
-	WLAN_OS_REPORT(("\n          Rx Dbg Functions   \n"));
-	WLAN_OS_REPORT(("--------------------------------------\n"));
-	WLAN_OS_REPORT(("350 - Print Rx block.\n"));
-	WLAN_OS_REPORT(("351 - Print Rx counters.\n"));
-	WLAN_OS_REPORT(("352 - Reset Rx counters.\n"));
-	WLAN_OS_REPORT(("353 - Start Rx throughput timer.\n"));
-	WLAN_OS_REPORT(("354 - Stop  Rx throughput timer.\n"));
 }
 
 

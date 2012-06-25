@@ -63,8 +63,6 @@ static TI_STATUS    cmdQueue_Push (TI_HANDLE  hCmdQueue,
                                    void       *pCb);
 #ifdef TI_DBG
 static void         cmdQueue_PrintQueue(TCmdQueue  *pCmdQueue);
-static char *       cmdQueue_GetIEString (TI_INT32 MboxCmdType, TI_UINT16 id);
-static char *       cmdQueue_GetCmdString (TI_INT32 MboxCmdType);
 #endif /* TI_DBG */
 
 
@@ -88,7 +86,6 @@ TI_HANDLE cmdQueue_Create (TI_HANDLE hOs)
     pCmdQueue = os_memoryAlloc (hOs, sizeof(TCmdQueue));
     if (pCmdQueue == NULL)
     {
-        WLAN_OS_REPORT(("FATAL ERROR: cmdQueue_Create(): Error Creating aCmdQueue - Aborting\n"));
         return NULL;
     }
 
@@ -207,16 +204,6 @@ static TI_STATUS cmdQueue_SM (TI_HANDLE hCmdQueue, ECmdQueueSmEvents eCmdQueueEv
                         pCmdQueue->state = CMDQUEUE_STATE_WAIT_FOR_COMPLETION;
 
                         pHead = &pCmdQueue->aCmdQueue[pCmdQueue->head];
-
-                        #ifdef CMDQUEUE_DEBUG_PRINT
-                        TRACE4(pCmdQueue->hReport, REPORT_SEVERITY_CONSOLE, "cmdQueue_SM: Send Cmd: CmdType = %d(%d) Len = %d, NumOfCmd = %d", pHead->cmdType, (pHead->aParamsBuf) ?  *(TI_UINT16 *)pHead->aParamsBuf:0, pHead->uParamsLen, pCmdQueue->uNumberOfCommandInQueue);
-
-                        WLAN_OS_REPORT(("cmdQueue_SM: Send Cmd: CmdType = %s(%s)\n"
-                                        "Len = %d, NumOfCmd = %d \n",
-                                        cmdQueue_GetCmdString(pHead->cmdType),
-                                        (pHead->aParamsBuf) ?  cmdQueue_GetIEString(pHead->cmdType,*(TI_UINT16 *)pHead->aParamsBuf):"",
-                                        pHead->uParamsLen, pCmdQueue->uNumberOfCommandInQueue));
-                        #endif
                 
                         #ifdef TI_DBG
                             pCmdQueue->uCmdSendCounter++;
@@ -267,7 +254,6 @@ static TI_STATUS cmdQueue_SM (TI_HANDLE hCmdQueue, ECmdQueueSmEvents eCmdQueueEv
                         break;
 
                     default:
-                        TRACE1(pCmdQueue->hReport, REPORT_SEVERITY_ERROR, "cmdQueue_SM: ** ERROR **  No such event (%d) for state CMDQUEUE_STATE_IDLE\n",eCmdQueueEvent);
                         bBreakWhile = TI_TRUE;
                         rc =  TI_NOK;
 
@@ -325,8 +311,6 @@ static TI_STATUS cmdQueue_SM (TI_HANDLE hCmdQueue, ECmdQueueSmEvents eCmdQueueEv
                                 }
                                 else
                                 {
-                                    WLAN_OS_REPORT(("cmdQueue_SM: ** ERROR **  Mbox status error %d, set bErrorFlag !!!!!\n", cmdStatus));
-                                    TRACE1(pCmdQueue->hReport, REPORT_SEVERITY_ERROR, "cmdQueue_SM: ** ERROR **  Mbox status error %d, set bErrorFlag !!!!!\n", cmdStatus);
                                     pCmdQueue->bErrorFlag = TI_TRUE;
                                 }
                             }
@@ -381,7 +365,6 @@ static TI_STATUS cmdQueue_SM (TI_HANDLE hCmdQueue, ECmdQueueSmEvents eCmdQueueEv
                         break;
 
                     default:
-                        TRACE1(pCmdQueue->hReport, REPORT_SEVERITY_ERROR, "cmdQueue_SM: ** ERROR **  No such event (%d) for state CMDQUEUE_STATE_IDLE\n",eCmdQueueEvent);
                         bBreakWhile = TI_TRUE;
                         rc =  TI_NOK;
 
@@ -479,7 +462,6 @@ static TI_STATUS cmdQueue_Push (TI_HANDLE  hCmdQueue,
          */
         if (pCmdQueue->uNumberOfCommandInQueue == CMDQUEUE_QUEUE_DEPTH)
         	{
-        TRACE0(pCmdQueue->hReport, REPORT_SEVERITY_ERROR, "cmdQueue_Push: ** ERROR ** The Queue is full\n");
 
             	return  TI_NOK;
         	}
@@ -512,15 +494,6 @@ static TI_STATUS cmdQueue_Push (TI_HANDLE  hCmdQueue,
             pCmdQueue->uMaxNumberOfCommandInQueue = pCmdQueue->uNumberOfCommandInQueue;     
         }
     #endif /* TI_DBG*/
-      
-    #ifdef CMDQUEUE_DEBUG_PRINT    
-        WLAN_OS_REPORT(("cmdQueue_Push: CmdType = %s (%s(%d))"
-    			"Len = %d, NumOfCmd = %d \n",
-    			cmdQueue_GetCmdString(cmdType),
-    			(pParamsBuf) ?  cmdQueue_GetIEString(cmdType,*(TI_UINT16 *)pParamsBuf):"",			
-    			(pParamsBuf) ?  *(TI_UINT16 *)pParamsBuf:0,			
-                uParamsLen, pCmdQueue->uNumberOfCommandInQueue));
-    #endif
 
     /* If queue has only one command trigger the send command from queue */  
     if (pCmdQueue->uNumberOfCommandInQueue == 1)
@@ -579,7 +552,6 @@ TI_STATUS cmdQueue_Restart (TI_HANDLE hCmdQueue)
     pCmdQueue->state = CMDQUEUE_STATE_IDLE;
     pCmdQueue->bAwake = TI_FALSE;
 
-TRACE0(pCmdQueue->hReport, REPORT_SEVERITY_INFORMATION, "cmdQueue_Clean: Cleaning aCmdQueue Queue");
     
 	/*
      * Save The Call Back Function in the Queue in order the return them after the recovery 
@@ -676,7 +648,6 @@ TI_STATUS cmdQueue_RegisterCmdCompleteGenericCb (TI_HANDLE hCmdQueue, void *fCb,
 	
     if (fCb == NULL || hCb == NULL)
 	{
-TRACE0(pCmdQueue->hReport, REPORT_SEVERITY_ERROR, "cmdQueue_RegisterCmdCompleteGenericCB: NULL parameter\n");
 		return TI_NOK;
 	}
 
@@ -705,7 +676,6 @@ TI_STATUS cmdQueue_RegisterForErrorCb (TI_HANDLE hCmdQueue, void *fCb, TI_HANDLE
 	
     if (fCb == NULL || hCb == NULL)
 	{
-TRACE0(pCmdQueue->hReport, REPORT_SEVERITY_ERROR, "cmdQueue_RegisterForErrorCB: NULL parameters\n");
 		return TI_NOK;
 	}
 
@@ -770,47 +740,8 @@ TI_STATUS cmdQueue_Error (TI_HANDLE hCmdQueue, TI_UINT32 command, TI_UINT32 stat
 {
     TCmdQueue* pCmdQueue = (TCmdQueue*)hCmdQueue;     
 
-    if (status == CMD_STATUS_UNKNOWN_CMD)
-    {
-        TRACE1(pCmdQueue->hReport, REPORT_SEVERITY_ERROR , "cmdQueue_Error: Unknown Cmd  (%d)\n", command);
-    }
-    else if (status == CMD_STATUS_UNKNOWN_IE)
-    {
-        TRACE4(pCmdQueue->hReport, REPORT_SEVERITY_CONSOLE,"cmdQueue_Error: Unknown IE, cmdType : %d (%d) IE: %d (%d)\n", command, command, (param) ? *(TI_UINT16 *) param : 0, *((TI_UINT16 *) param));
-
-        WLAN_OS_REPORT(("cmdQueue_Error: Unknown IE, cmdType : %s (%d) IE: %s (%d)\n",
-                        cmdQueue_GetCmdString (command),
-                        command,
-                        (param) ? cmdQueue_GetIEString (command, *((TI_UINT16 *) param)) : "",
-                        *((TI_UINT16 *) param)));
-    }
-    else
-    {
-        TRACE1(pCmdQueue->hReport, REPORT_SEVERITY_ERROR , "cmdQueue_Error: CmdMbox status is %d\n", status);
-    }
-
     if (status != CMD_STATUS_UNKNOWN_CMD && status != CMD_STATUS_UNKNOWN_IE)
     {
-      #ifdef TI_DBG
-
-        TCmdQueueNode* pHead = &pCmdQueue->aCmdQueue[pCmdQueue->head];  
-        TI_UINT32 TimeStamp = os_timeStampMs(pCmdQueue->hOs);
-
-        WLAN_OS_REPORT(("cmdQueue_Error: **ERROR**  Command Occured \n"
-						 "                                        Cmd = %s %s, Len = %d \n"
-						 "                                        NumOfCmd = %d\n"
-						 "                                        MAC TimeStamp on timeout = %d\n",
-						cmdQueue_GetCmdString(pHead->cmdType), 
-						(pHead->aParamsBuf) ? cmdQueue_GetIEString(pHead->cmdType, *(TI_UINT16 *)pHead->aParamsBuf) : "",
-						pHead->uParamsLen, 
-						pCmdQueue->uNumberOfCommandInQueue, 
-						TimeStamp));
-
-        /* Print The command that was sent before the timeout occur */
-        cmdQueue_PrintHistory(pCmdQueue, CMDQUEUE_HISTORY_DEPTH);
-
-      #endif /* TI_DBG */
-
         /* preform Recovery */
         if (pCmdQueue->fFailureCb)
         {
@@ -862,18 +793,6 @@ TI_UINT32 cmdQueue_GetMaxNumberOfCommands (TI_HANDLE hCmdQueue)
 void cmdQueue_Print (TI_HANDLE hCmdQueue)
 {
     TCmdQueue* pCmdQueue = (TCmdQueue*)hCmdQueue; 
-	
-    WLAN_OS_REPORT(("------------- aCmdQueue Queue -------------------\n"));
-    
-    WLAN_OS_REPORT(("state = %d\n", pCmdQueue->state));
-    WLAN_OS_REPORT(("cmdQueue_Print:The Max NumOfCmd in Queue was = %d\n",
-                        pCmdQueue->uMaxNumberOfCommandInQueue));
-    WLAN_OS_REPORT(("cmdQueue_Print:The Current NumOfCmd in Queue = %d\n",
-                        pCmdQueue->uNumberOfCommandInQueue));
-    WLAN_OS_REPORT(("cmdQueue_Print:The Total number of Cmd send from Queue= %d\n",
-                        pCmdQueue->uCmdSendCounter));
-    WLAN_OS_REPORT(("cmdQueue_Print:The Total number of Cmd Completed interrupt= %d\n",
-                        pCmdQueue->uCmdCompltCounter));
 
     cmdQueue_PrintQueue (pCmdQueue);
 }
@@ -900,13 +819,6 @@ static void cmdQueue_PrintQueue (TCmdQueue *pCmdQueue)
     for(uCurrentCmdIndex = 0 ; uCurrentCmdIndex < NumberOfCommand ; uCurrentCmdIndex++)
     {
         pHead = &pCmdQueue->aCmdQueue[first];
-
-        WLAN_OS_REPORT(("Cmd index %d CmdType = %s %s, Len = %d, Place in Queue = %d \n",
-                       uCurrentCmdIndex, 
-                       cmdQueue_GetCmdString(pHead->cmdType),
-                       cmdQueue_GetIEString(pHead->cmdType, (((pHead->cmdType == CMD_INTERROGATE)||(pHead->cmdType == CMD_CONFIGURE)) ? *(TI_UINT16 *)pHead->aParamsBuf : 0)),
-                       pHead->uParamsLen, 
-                       first));    
 
         first++;
         if (first == CMDQUEUE_QUEUE_DEPTH)
@@ -936,18 +848,10 @@ void cmdQueue_PrintHistory (TI_HANDLE hCmdQueue, TI_UINT32 uNumOfCmd)
     TI_UINT32 first  = pCmdQueue->head;
     TCmdQueueNode* pHead;
 
-    WLAN_OS_REPORT(("--------------- cmdQueue_PrintHistory of %d -------------------\n",uNumOfCmd));
     
     for (uCurrentCmdIndex = 0; uCurrentCmdIndex < uNumOfCmd; uCurrentCmdIndex++)
     {
         pHead  =  &pCmdQueue->aCmdQueue[first];
-
-        WLAN_OS_REPORT(("Cmd index %d CmdType = %s %s, Len = %d, Place in Queue = %d \n",
-                        uCurrentCmdIndex, 
-                        cmdQueue_GetCmdString(pHead->cmdType),
-                        cmdQueue_GetIEString(pHead->cmdType, (((pHead->cmdType == CMD_INTERROGATE)||(pHead->cmdType == CMD_CONFIGURE)) ? *(TI_UINT16 *)pHead->aParamsBuf : 0)),
-                        pHead->uParamsLen, 
-                        first));
 
         if (first == 0)
         {
@@ -958,139 +862,6 @@ void cmdQueue_PrintHistory (TI_HANDLE hCmdQueue, TI_UINT32 uNumOfCmd)
 			first--;
         }
 	}
-
-	WLAN_OS_REPORT(("-----------------------------------------------------------------------\n"));
-}
-
-
-/*
- * \brief	Interperts the command's type to the command's name 
- * 
- * \param  MboxCmdType - The command type
- * \return The command name
- * 
- * \par Description
- * Used for debugging purposes
- *
- * \sa
- */
-static char* cmdQueue_GetCmdString (TI_INT32 MboxCmdType)
-    {
-    	switch (MboxCmdType)
-    	{
-    		case 0: return "CMD_RESET";
-    		case 1: return "CMD_INTERROGATE"; 
-    	 	case 2: return "CMD_CONFIGURE";
-    	    	case 3: return "CMD_ENABLE_RX";
-    		case 4: return "CMD_ENABLE_TX";
-    		case 5: return "CMD_DISABLE_RX";
-    	    	case 6: return "CMD_DISABLE_TX";	
-    		case 8: return "CMD_SCAN";
-    		case 9: return "CMD_STOP_SCAN";	
-    	    	case 10: return "CMD_VBM";
-    		case 11: return "CMD_START_JOIN";	
-    		case 12: return "CMD_SET_KEYS";	
-    		case 13: return "CMD_READ_MEMORY";	
-    	    	case 14: return "CMD_WRITE_MEMORY";
-            case 19: return "CMD_SET_TEMPLATE";
-    		case 23: return "CMD_TEST";		
-    		case 27: return "CMD_ENABLE_RX_PATH";
-    		case 28: return "CMD_NOISE_HIST";	
-    	    	case 29: return "CMD_RX_RESET";	
-    		case 32: return "CMD_LNA_CONTROL";	
-    		case 33: return "CMD_SET_BCN_MODE";	
-    		case 34: return "CMD_MEASUREMENT";	
-    		case 35: return "CMD_STOP_MEASUREMENT";
-    		case 36: return "CMD_DISCONNECT";		
-    		case 37: return "CMD_SET_PS_MODE";		
-    		case 38: return "CMD_CHANNEL_SWITCH";	
-    		case 39: return "CMD_STOP_CHANNEL_SWICTH";
-    		case 40: return "CMD_AP_DISCOVERY";
-    		case 41: return "CMD_STOP_AP_DISCOVERY";
-    		case 42: return "CMD_SPS_SCAN";			
-    		case 43: return "CMD_STOP_SPS_SCAN";		
-            case 45: return "CMD_HEALTH_CHECK";     
-            case 48: return "CMD_CONNECTION_SCAN_CFG";
-            case 49: return "CMD_CONNECTION_SCAN_SSID_CFG";
-            case 50: return "CMD_START_PERIODIC_SCAN";
-            case 51: return "CMD_STOP_PERIODIC_SCAN";
-            case 52: return "CMD_SET_STATUS";
-    		default: return " *** Error No Such CMD **** ";
-    	}
-    }
-    
-/*
- * \brief	Interperts the command's IE to the command's IE name 
- * 
- * \param  MboxCmdType - The command IE number
- * \return The command IE name
- * 
- * \par Description
- * Used for debugging purposes
- *
- * \sa
- */
-static char * cmdQueue_GetIEString (TI_INT32 MboxCmdType, TI_UINT16 Id)
-{
-    if( MboxCmdType== CMD_INTERROGATE || MboxCmdType == CMD_CONFIGURE)	
-    {
-        switch (Id)
-        {
-        case ACX_WAKE_UP_CONDITIONS: 		return " (ACX_WAKE_UP_CONDITIONS)";
-        case ACX_MEM_CFG: 					return " (ACX_MEM_CFG)";                 
-        case ACX_SLOT: 						return " (ACX_SLOT) ";                    
-        case ACX_AC_CFG: 					return " (ACX_AC_CFG) ";                  
-        case ACX_MEM_MAP: 					return " (ACX_MEM_MAP)";
-        case ACX_AID: 						return " (ACX_AID)";
-        case ACX_MEDIUM_USAGE: 				return " (ACX_MEDIUM_USAGE) ";                  
-        case ACX_RX_CFG: 					return " (ACX_RX_CFG) ";                  
-        case ACX_STATISTICS: 				return " (ACX_STATISTICS) ";
-        case ACX_FEATURE_CFG: 				return " (ACX_FEATURE_CFG) ";                    
-        case ACX_TID_CFG: 					return " (ACX_TID_CFG) ";                    
-        case ACX_BEACON_FILTER_OPT: 		return " (ACX_BEACON_FILTER_OPT) ";             			      											  
-        case ACX_NOISE_HIST: 				return " (ACX_NOISE_HIST)";           
-        case ACX_PD_THRESHOLD: 				return " (ACX_PD_THRESHOLD) ";                 
-        case ACX_TX_CONFIG_OPT: 			return " (ACX_TX_CONFIG_OPT) ";
-        case ACX_CCA_THRESHOLD: 			return " (ACX_CCA_THRESHOLD)";            
-        case ACX_EVENT_MBOX_MASK: 			return " (ACX_EVENT_MBOX_MASK) ";
-        case ACX_CONN_MONIT_PARAMS: 		return " (ACX_CONN_MONIT_PARAMS) ";
-        case ACX_CONS_TX_FAILURE: 			return " (ACX_CONS_TX_FAILURE) ";
-        case ACX_BCN_DTIM_OPTIONS: 			return " (ACX_BCN_DTIM_OPTIONS) ";                             
-        case ACX_SG_ENABLE: 				return " (ACX_SG_ENABLE) ";                                       
-        case ACX_SG_CFG: 					return " (ACX_SG_CFG) ";                                       
-        case ACX_FM_COEX_CFG: 				return " (ACX_FM_COEX_CFG) ";                                       
-        case ACX_BEACON_FILTER_TABLE: 		return " (ACX_BEACON_FILTER_TABLE) ";
-        case ACX_ARP_IP_FILTER: 			return " (ACX_ARP_IP_FILTER) ";
-        case ACX_ROAMING_STATISTICS_TBL:	return " (ACX_ROAMING_STATISTICS_TBL) ";  
-        case ACX_RATE_POLICY: 				return " (ACX_RATE_POLICY) ";  
-        case ACX_CTS_PROTECTION: 			return " (ACX_CTS_PROTECTION) ";  
-        case ACX_SLEEP_AUTH: 				return " (ACX_SLEEP_AUTH) ";  
-        case ACX_PREAMBLE_TYPE: 			return " (ACX_PREAMBLE_TYPE) ";  
-        case ACX_ERROR_CNT: 				return " (ACX_ERROR_CNT) ";  
-        case ACX_IBSS_FILTER: 				return " (ACX_IBSS_FILTER) ";  
-        case ACX_SERVICE_PERIOD_TIMEOUT:	return " (ACX_SERVICE_PERIOD_TIMEOUT) ";  
-        case ACX_TSF_INFO: 					return " (ACX_TSF_INFO) ";  
-        case ACX_CONFIG_PS_WMM: 			return " (ACX_CONFIG_PS_WMM) "; 
-        case ACX_ENABLE_RX_DATA_FILTER: 	return " (ACX_ENABLE_RX_DATA_FILTER) ";
-        case ACX_SET_RX_DATA_FILTER: 		return " (ACX_SET_RX_DATA_FILTER) ";
-        case ACX_GET_DATA_FILTER_STATISTICS:return " (ACX_GET_DATA_FILTER_STATISTICS) ";
-        case ACX_RX_CONFIG_OPT: 			return " (ACX_RX_CONFIG_OPT) ";
-        case ACX_FRAG_CFG: 				    return " (ACX_FRAG_CFG) ";
-        case ACX_BET_ENABLE: 				return " (ACX_BET_ENABLE) ";
-        case ACX_RSSI_SNR_TRIGGER: 			return " (ACX_RSSI_SNR_TRIGGER) ";
-        case ACX_RSSI_SNR_WEIGHTS: 			return " (ACX_RSSI_SNR_WEIGHTS) ";
-        case ACX_KEEP_ALIVE_MODE:           return " (ACX_KEEP_ALIVE_MODE) ";
-        case ACX_SET_KEEP_ALIVE_CONFIG:     return " (ACX_SET_KEEP_ALIVE_CONFIG) ";
-        case ACX_SET_DCO_ITRIM_PARAMS:      return " (ACX_SET_DCO_ITRIM_PARAMS) ";
-        case DOT11_RX_MSDU_LIFE_TIME: 		return " (DOT11_RX_MSDU_LIFE_TIME) ";
-        case DOT11_CUR_TX_PWR:   			return " (DOT11_CUR_TX_PWR) ";
-        case DOT11_RTS_THRESHOLD: 			return " (DOT11_RTS_THRESHOLD) ";
-        case DOT11_GROUP_ADDRESS_TBL: 		return " (DOT11_GROUP_ADDRESS_TBL) ";  
-               
-        default:	return " *** Error No Such IE **** ";
-        }
-    }
-    return "";
 }
 
 #endif  /* TI_DBG */

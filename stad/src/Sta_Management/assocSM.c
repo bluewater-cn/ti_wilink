@@ -205,7 +205,6 @@ TI_STATUS assoc_unload(TI_HANDLE hAssoc)
     if (status != TI_OK)
     {
         /* report failure but don't stop... */
-        TRACE0(pHandle->hReport, REPORT_SEVERITY_ERROR, "ASSOC_SM: Error releasing FSM memory \n");
     }
     
 	if (pHandle->hAssocSmTimer)
@@ -301,7 +300,6 @@ TI_STATUS assoc_SetDefaults (TI_HANDLE hAssoc, assocInitParams_t *pAssocInitPara
     pHandle->hAssocSmTimer = tmr_CreateTimer (pHandle->hTimer);
     if (pHandle->hAssocSmTimer == NULL)
     {
-        TRACE0(pHandle->hReport, REPORT_SEVERITY_ERROR, "assoc_SetDefaults(): Failed to create hAssocSmTimer!\n");
         return TI_NOK;
     }
 
@@ -485,8 +483,6 @@ TI_STATUS assoc_recv(TI_HANDLE hAssoc, mlmeFrameInfo_t *pFrame)
         TI_UINT8       rsnAssocIeLen;
         TI_UINT8        length = 0;
 
-
-        TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "ASSOC_SM: DEBUG Success associating to AP \n");
         
         /* set AID to HAL */
         tTwdParam.paramType = TWD_AID_PARAM_ID;
@@ -523,7 +519,6 @@ TI_STATUS assoc_recv(TI_HANDLE hAssoc, mlmeFrameInfo_t *pFrame)
 
         if(status != TI_OK)
         {
-            TRACE0(pHandle->hReport, REPORT_SEVERITY_ERROR, "ASSOC_SM: DEBUG - Association failed : qosMngr_setSite error \n");
             /* in case we wanted to work with qosAP and failed to connect to qos AP we want to reassociated again 
                to another one */  
             status = assoc_smEvent(pHandle, ASSOC_SM_EVENT_FAIL, hAssoc);
@@ -547,36 +542,28 @@ TI_STATUS assoc_recv(TI_HANDLE hAssoc, mlmeFrameInfo_t *pFrame)
             break;
         case 1:
             /* print debug message */
-            TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "ASSOC_SM: DEBUG - Association denied: Unspecified error \n");
             break;
         case 10:
             /* print debug message */
-            TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "ASSOC_SM: DEBUG - Association denied: Cannot support all requested capabilities in the Capability Information field \n");
             break;
         case 11:
             /* print debug message */
-            TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "ASSOC_SM: DEBUG - Association denied: Reassociation denied due to inability to confirm that association exists \n");
             break;
         case 12:
             /* print debug message */
-            TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "ASSOC_SM: DEBUG - Association denied: Association denied due to reason outside the scope of this standard \n");
             rsn_reportAuthFailure(pHandle->hRsn, RSN_AUTH_STATUS_INVALID_TYPE);
             break;
         case 13:
-            TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "ASSOC_SM: DEBUG - Association denied: Association denied due to wrong authentication algorithm \n");
             rsn_reportAuthFailure(pHandle->hRsn, RSN_AUTH_STATUS_INVALID_TYPE);
             break;
         case 17:
             /* print debug message */
-            TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "ASSOC_SM: DEBUG - Association denied: Association denied because AP is unable to handle additional associated stations \n");
             break;
         case 18:
             /* print debug message */
-            TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "ASSOC_SM: DEBUG - Association denied: Association denied due to requesting station not supporting all of the data rates in the BSSBasicRateSet parameter \n");
             break;
         default:
             /* print error message on wrong error code for association response */
-            TRACE1(pHandle->hReport, REPORT_SEVERITY_ERROR, "ASSOC_SM: ERROR - Association denied: error code (%d) irrelevant \n", rspStatus);
             break;
         }
 
@@ -646,7 +633,6 @@ TI_STATUS assoc_getParam(TI_HANDLE hAssoc, paramInfo_t *pParam)
            paramInfo_t  *lParam;
            ScanBssType_enum bssType;
 
-           TRACE0(pHandle->hReport, REPORT_SEVERITY_SM, "ASSOC_SM: DEBUG - Association Information Get:  \n");
            lParam = (paramInfo_t *)os_memoryAlloc(pHandle->hOs, sizeof(paramInfo_t));
            if (!lParam)
            {
@@ -660,7 +646,6 @@ TI_STATUS assoc_getParam(TI_HANDLE hAssoc, paramInfo_t *pParam)
            os_memoryFree(pHandle->hOs, lParam, sizeof(paramInfo_t));
            if (bssType != BSS_INFRASTRUCTURE)
            {
-               TRACE0(pHandle->hReport, REPORT_SEVERITY_ERROR, "Not in Infrastructure BSS, No ASSOC Info for GET ASSOC_ASSOCIATION_INFORMATION_PARAM\n");
                return TI_NOK;
            }
 
@@ -832,12 +817,8 @@ TI_STATUS assoc_smEvent(assoc_t *pAssoc, TI_UINT8 event, void *pData)
     status = fsm_GetNextState(pAssoc->pAssocSm, pAssoc->currentState, event, &nextState);
     if (status != TI_OK)
     {
-        TRACE0(pAssoc->hReport, REPORT_SEVERITY_ERROR, "ASSOC_SM: ERROR - failed getting next state \n");
-
         return(TI_NOK);
     }
-
-	TRACE3( pAssoc->hReport, REPORT_SEVERITY_INFORMATION, "assoc_smEvent: <currentState = %d, event = %d> --> nextState = %d\n", pAssoc->currentState, event, nextState);
 
     status = fsm_Event(pAssoc->pAssocSm, &pAssoc->currentState, event, pData);
 
@@ -891,8 +872,6 @@ TI_STATUS assoc_smFailureWait(assoc_t *pAssoc)
     }
     else    /* (uRspStatus == 0) how did we get here ? */ 
     {
-        TRACE0(pAssoc->hReport, REPORT_SEVERITY_ERROR, "while Response status is OK (0) !!! \n");
-
         status = assoc_smReportFailure(pAssoc, (TI_UINT16)TI_NOK);
     }
     return status;
@@ -1256,7 +1235,7 @@ TI_STATUS assoc_smRatesBuild(assoc_t *pCtx, TI_UINT8 *pRates, TI_UINT32 *ratesLe
     TI_UINT32           len = 0, ofdmIndex = 0;
     TI_UINT8            ratesBuf[DOT11_MAX_SUPPORTED_RATES];
     EDot11Mode          mode;
-    TI_UINT32           suppRatesLen, extSuppRatesLen, i;
+    TI_UINT32           suppRatesLen, extSuppRatesLen;
     pDot11Rates = (dot11_RATES_t*)pRates;
 
 
@@ -1315,12 +1294,6 @@ TI_STATUS assoc_smRatesBuild(assoc_t *pCtx, TI_UINT8 *pRates, TI_UINT32 *ratesLe
         os_memoryCopy(NULL, (void *)pDot11Rates->rates, &ratesBuf[ofdmIndex], pDot11Rates->hdr[1]);
         extSuppRatesLen = pDot11Rates->hdr[1] + sizeof(dot11_eleHdr_t);
         *ratesLen = suppRatesLen + extSuppRatesLen;
-    }
-
-    TRACE3(pCtx->hReport, REPORT_SEVERITY_INFORMATION, "ASSOC_SM: ASSOC_REQ - bitmapSupp= 0x%X,bitMapBasic = 0x%X, len = %d\n", rateSuppMask,rateBasicMask,len);
-    for(i=0; i<len; i++)
-    {
-        TRACE2(pCtx->hReport, REPORT_SEVERITY_INFORMATION, "ASSOC_SM: ASSOC_REQ - ratesBuf[%d] = 0x%X\n", i, ratesBuf[i]);
     }
 
     return TI_OK;
@@ -1399,7 +1372,6 @@ TI_STATUS assoc_smRequestBuild(assoc_t *pCtx, TI_UINT8* reqBuf, TI_UINT32* reqLe
         if (status == TI_OK)
         {
             MAC_COPY (pRequest, param.content.siteMgrDesiredBSSID);
-            TRACE6(pCtx->hReport, REPORT_SEVERITY_INFORMATION, "ASSOC_SM: ASSOC_REQ - prev AP = %x-%x-%x-%x-%x-%x\n", param.content.siteMgrDesiredBSSID[0], param.content.siteMgrDesiredBSSID[1], param.content.siteMgrDesiredBSSID[2], param.content.siteMgrDesiredBSSID[3], param.content.siteMgrDesiredBSSID[4], param.content.siteMgrDesiredBSSID[5]);
 
 
             pRequest += MAC_ADDR_LEN;
@@ -1407,7 +1379,6 @@ TI_STATUS assoc_smRequestBuild(assoc_t *pCtx, TI_UINT8* reqBuf, TI_UINT32* reqLe
         }
         else
         {
-            TRACE0(pCtx->hReport, REPORT_SEVERITY_ERROR, "ASSOC_SM: ASSOC_REQ - No prev AP \n");
             return status;
 
         }
@@ -1580,7 +1551,6 @@ TI_STATUS assoc_saveAssocRespMessage(assoc_t *pAssocSm, TI_UINT8 *pAssocBuffer, 
     os_memoryCopy(pAssocSm->hOs, pAssocSm->assocRespBuffer, pAssocBuffer, length);  
     pAssocSm->assocRespLen = length;
     
-    TRACE1(pAssocSm->hReport, REPORT_SEVERITY_INFORMATION, "assoc_saveAssocRespMessage: length=%ld \n",length);
     return TI_OK;
 }
 
@@ -1595,7 +1565,6 @@ TI_STATUS assoc_saveAssocReqMessage(assoc_t *pAssocSm, TI_UINT8 *pAssocBuffer, T
     os_memoryCopy(pAssocSm->hOs, pAssocSm->assocReqBuffer, pAssocBuffer, length);  
     pAssocSm->assocReqLen = length;
     
-    TRACE1(pAssocSm->hReport, REPORT_SEVERITY_INFORMATION, "assoc_saveAssocReqMessage: length=%ld \n",length);
     return TI_OK;
 }
 

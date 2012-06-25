@@ -74,24 +74,20 @@ void ctrlDebugFunction(TI_HANDLE hCtrlData, TI_UINT32 funcType, void *pParam)
 		break;
 
 	case CTRL_PRINT_CTRL_BLOCK:
-		WLAN_OS_REPORT(("CTRL DBG - Print Ctrl Block \n\n"));
 		ctrlData_printCtrlBlock(pCtrlData);
 		break;
 
 	case CTRL_PRINT_TX_PARAMETERS:
-		WLAN_OS_REPORT(("CTRL DBG - Print tx paramters \n\n"));
 		ctrlData_printTxParameters(pCtrlData);
 		break;
 
 	case CTRL_SET_CTS_TO_SELF:
-		WLAN_OS_REPORT(("CTRL DBG - Set CtsToSelf = %s\n",((*(TI_UINT8*)pParam > 0) ? "TI_TRUE" : "TI_FALSE")));
 		paramInfo.paramType = CTRL_DATA_CURRENT_PROTECTION_STATUS_PARAM;
 		paramInfo.content.ctrlDataProtectionEnabled = ((*(TI_UINT8*)pParam > 0) ? 1 : 0);
 		ctrlData_setParam(pCtrlData,&paramInfo);
 		break;
 
 	default:
-		WLAN_OS_REPORT(("Invalid function type in Debug Ctrl Function Command: %d\n\n", funcType));
 		break;
 	}
 } 
@@ -99,12 +95,6 @@ void ctrlDebugFunction(TI_HANDLE hCtrlData, TI_UINT32 funcType, void *pParam)
 
 void printCtrlDbgFunctions(void)
 {
-	WLAN_OS_REPORT(("   Ctrl Dbg Functions   \n"));
-	WLAN_OS_REPORT(("------------------------\n"));
-	WLAN_OS_REPORT(("400 - Print this menu.\n"));
-	WLAN_OS_REPORT(("401 - Print Ctrl Block.\n"));
-	WLAN_OS_REPORT(("402 - Print Tx parameters.\n"));
-  	WLAN_OS_REPORT(("403 - Set CtsToSelf.\n"));
 }
 
 

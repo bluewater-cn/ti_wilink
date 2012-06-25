@@ -110,7 +110,6 @@ TI_HANDLE powerSrvSM_create(TI_HANDLE hOsHandle)
     pPowerSrvSM = (PowerSrvSM_t*) os_memoryAlloc (hOsHandle, sizeof(PowerSrvSM_t));
     if ( pPowerSrvSM == NULL )
     {
-        WLAN_OS_REPORT(("%s(%d) - Memory Allocation Error!\n",__FUNCTION__,__LINE__));
         return NULL;
     }
 
@@ -125,7 +124,6 @@ TI_HANDLE powerSrvSM_create(TI_HANDLE hOsHandle)
                         (TI_UINT8)POWER_SRV_SM_EVENT_NUM);
     if ( status != TI_OK )
     {
-        WLAN_OS_REPORT(("%s(%d) - Error in create FSM!\n",__FUNCTION__,__LINE__));
         powerSrvSM_destroy(pPowerSrvSM);
         return NULL;
     }
@@ -297,7 +295,6 @@ TI_STATUS powerSrvSM_init (TI_HANDLE hPowerSrvSM,
     pPowerSrvSM->hPwrSrvSmTimer = tmr_CreateTimer (pPowerSrvSM->hTimer);
 	if (pPowerSrvSM->hPwrSrvSmTimer == NULL)
 	{
-        TRACE0(pPowerSrvSM->hReport, REPORT_SEVERITY_ERROR, "powerSrvSM_init(): Failed to create hPwrSrvSmTimer!\n");
 		return TI_NOK;
 	}
 
@@ -320,7 +317,6 @@ TI_STATUS powerSrvSM_init (TI_HANDLE hPowerSrvSM,
     Probe Request : Not PBCC modulation, Long Preamble */
     pPowerSrvSM->NullPktRateModulation= (DRV_RATE_MASK_1_BARKER | DRV_RATE_MASK_2_BARKER); 
 
-    TRACE0(pPowerSrvSM->hReport, REPORT_SEVERITY_INIT, "PowerSrvSM Initialized\n");
 
     return TI_OK;
 }
@@ -378,11 +374,9 @@ TI_STATUS powerSrvSM_SMApi(TI_HANDLE hPowerSrvSM,
     case POWER_SRV_EVENT_FAIL :
     case POWER_SRV_EVENT_SUCCESS :
 
-        TRACE1(pPowerSrvSM->hReport, REPORT_SEVERITY_INFORMATION, "powerSrvSM_SMApi(%d) called - legal input parameter.\n",theSMEvent);
         break;
 
     default:
-        TRACE1(pPowerSrvSM->hReport, REPORT_SEVERITY_WARNING, "powerSrvSM_SMApi(%d) called,                            input parameter is illegal.",theSMEvent);
         return TI_NOK;
     }
 
@@ -487,12 +481,6 @@ void powerSrvSM_printObject(TI_HANDLE hPowerSrvSM)
     PowerSrvSM_t *pPowerSrvSM = (PowerSrvSM_t*)hPowerSrvSM;
     char *pString;
 
-    WLAN_OS_REPORT(("\n+++++ powerSrvSM_printObject +++++\n"));
-    WLAN_OS_REPORT(("Handle to the CmdBld is 0x%08X\n", pPowerSrvSM->hCmdBld));
-    WLAN_OS_REPORT(("Handle to the OS is 0x%08X\n", pPowerSrvSM->hOS));
-    WLAN_OS_REPORT(("Handle to the Report is 0x%08X\n", pPowerSrvSM->hReport));
-    WLAN_OS_REPORT(("Handle to the FSM is 0x%08X\n", pPowerSrvSM->hFSM));
-
     switch ( pPowerSrvSM->currentState )
     {
     case POWER_SRV_STATE_ACTIVE:
@@ -520,9 +508,6 @@ void powerSrvSM_printObject(TI_HANDLE hPowerSrvSM)
         pString = "UNKWON PARAMETER";
         break;
     }
-    WLAN_OS_REPORT(("The current state of the state machine is %s (=%d)\n",
-                    pString,
-                    pPowerSrvSM->currentState));
 
 }
 
@@ -665,12 +650,6 @@ RETURN:    TI_STATUS - TI_OK
 ****************************************************************************************/
 static TI_STATUS powerSrvSMActionUnexpected(TI_HANDLE hPowerSrvSM)
 {
-#ifdef TI_DBG
-    PowerSrvSM_t *pPowerSrvSM = (PowerSrvSM_t*)hPowerSrvSM;
-
-    TRACE0(pPowerSrvSM->hReport, REPORT_SEVERITY_ERROR, "called: powerSrvSMActionUnexpected");
-#endif /* TI_DBG */
-
     return TI_OK;
 }
 
@@ -703,12 +682,10 @@ static TI_STATUS powerSrvSmSMEvent(TI_UINT8* pCurrentState,
                               &nextState);
     if ( status != TI_OK )
     {
-        TRACE0(pPowerSrvSM->hReport, REPORT_SEVERITY_SM, "PowerSrvSM - State machine error, failed getting next state\n");
         return(status);
     }
 
 
-	TRACE3( pPowerSrvSM->hReport, REPORT_SEVERITY_INFORMATION, "powerSrvSmSMEvent: <currentState = %d, event = %d> --> nextState = %d\n", *pCurrentState, event, nextState);
 
     status = fsm_Event(pPowerSrvSM->hFSM,
                        pCurrentState,
@@ -758,10 +735,6 @@ static TI_STATUS    powerSrvSMSendMBXConfiguration(TI_HANDLE hPowerSrvSM, TI_BOO
                                   (void *)pPowerSrvSM->pSmRequest->powerSaveCmdResponseCB,
                                   (pPowerSrvSM->pSmRequest->powerSaveCmdResponseCB == NULL) ? NULL : pPowerSrvSM->pSmRequest->powerSaveCBObject);
                                       
-    if ( status != TI_OK )
-    {
-        TRACE0(pPowerSrvSM->hReport, REPORT_SEVERITY_ERROR, "Error in configuring Power Manager paramters!\n");
-    }
 
     return status;
 }
@@ -784,7 +757,6 @@ static void powerSrvSMTimerExpired (TI_HANDLE hPowerSrvSM, TI_BOOL bTwdInitOccur
     PowerSrvSM_t *pPowerSrvSM = (PowerSrvSM_t*)hPowerSrvSM;
 
     /* Print an error message */
-    TRACE0(pPowerSrvSM->hReport, REPORT_SEVERITY_ERROR, "PS guard timer expired!\n");
 
     /* Call the error notification callback (triggering recovery) */
     pPowerSrvSM->failureEventCB( pPowerSrvSM->hFailureEventObj ,POWER_SAVE_FAILURE );
